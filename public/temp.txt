@@ -1,0 +1,277 @@
+
+
+<!-- 
+        <form id="creeaza-cont">
+
+            <h3>Creeaza un cont</h3>
+            <hr>
+            
+            <label for="email">Email:</label>
+            <input type="text" name="email" id="email">
+            
+            <label for="pass">Parola:</label>
+            <input type="password" name="pass" id="pass">
+
+            <label for="pass1">Confirma parola:</label>
+            <input type="password" name="pass1" id="pass1">
+
+            <button type="submit">Creeaza un cont</button>
+
+        </form>
+
+  
+
+
+
+        <form id="intra-in-cont">
+            <h3>Intra in cont</h3>
+            <hr>
+
+            <label for="email">Email:</label>
+            <input type="text" name="email" id="email">
+            
+            <label for="email">Parola:</label>
+            <input type="password" name="pass" id="pass">
+
+            <button type="submit">Intra in cont</button>
+
+        </form>
+
+
+        <form id="reseteaza-parola">
+            <h3>Reseteaza parola</h3>
+            <hr>
+
+            <label for="email">Email:</label>
+            <input type="text" name="email" id="email">
+            
+            <button type="submit">Reseteaza parola</button>
+
+        </form>
+
+
+        <div class="card">
+            <img src="./img/1.jpg" alt="img">
+            <h2><a href="#">200&euro;, camera in Iasi-Nicolina</a></h2>
+        </div>       
+        
+
+        <div class="anunt">
+
+            <h4>Detalii anunt</h4>
+            <hr>
+
+            <div class="card">
+                <img src="./img/1.jpg" alt="img">
+                <h2>200&euro;, camera in Iasi-Nicolina</h2>
+            </div>     
+               
+            <div class="descriere-anunt">
+                <h4>Descriere anunt</h4>
+                <hr>
+                <p>Apartamentul este situat in Iasi-Nicolina
+                    este foarte aproape de statia de autobuz,
+                    este situat la etajul 1 are interfon, 
+                    blocul este nou prima utilizatre.
+                </p>
+            </div>
+
+            <div class="utilizator">
+                <img src="./img/ca.jpg" alt="img">
+                <h4>Climente Alin</h4>
+                <span>Iasi, buget 150&euro;</span>
+                <span>&#128241; 0724454545</span>
+                <span>&#128231; climente.alin@gmail.com</span>
+            </div>    
+
+            <div class="sumar-anunt">
+                <table>
+                    <thead>
+                      <tr>
+                        <th>Facilitati/Utilitati</th>
+                        <th>Da/Nu</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Mobilat complet*</td>
+                        <td>Da</td>
+                      </tr>
+                      <tr>
+                        <td>Electrocasnice de baza*</td>
+                        <td>Da</td>
+                      </tr>
+                      <tr>
+                        <td>Racordari de baza*</td>
+                        <td>Da</td>
+                      </tr>
+                      <tr>
+                        <td>Transport in comun*</td>
+                        <td>Da</td>
+                      </tr>
+                      <tr>
+                        <td>Magazin alimentar aproape*</td>
+                        <td>Da</td>
+                      </tr>
+
+                    </tbody>
+                  </table>
+
+                  <p>
+                    *Mobilat complet - Are cel putin un dulap, o masa, un scaun si 
+                    cate un pat sau canapea in fiecare camera. 
+                    <br> 
+                    *Electrocasnice de baza - 
+                    Are cel putin masina de spalat si aragaz.
+                    <br>
+                    *Racordari de baza - Este racordat la energie electrica, 
+                    apa curenta, gaz, canalizare, internet, cablu tv.
+                    <br>
+                    *Transport in comun - O statie de transport in comun se afla 
+                    la o distanta de max. 500 metri fata de locuinta.
+                    <br>
+                    *Magazinul alimentar se afla 
+                    la o distanta de max. 500 metri fata de locuinta.
+                  </p>
+            </div>
+
+           
+
+        </div>
+
+
+    <form autocomplete="off" id="adauga-camera-de-inchiriat">
+        <h3>Adauga o camera de inchiriat</h3>
+        <hr>
+
+        <label for="Localitate">Localitate:</label>
+        <input type="text" list="localitati" name="Localitate" id="Localitate">
+        
+        <datalist id="localitati">
+            <option value="Bucuresti">
+            <option value="Cluj">
+            <option value="Iasi">
+            <option value="Timisoara">
+            <option value="Brasov">
+        </datalist>
+
+        <label for="Zona">Zona:</label>
+        <input type="text" name="Zona" id="Zona">
+
+        <label for="Pret">Pret:</label>
+        <input type="tel" name="Pret" id="Pret">
+        
+        <label for="Descriere">Descriere:</label>
+        <textarea name="Descriere" id="Descriere" cols="30" rows="4"> 
+        </textarea>
+
+         
+        <label for="foto">Adauga o fotografie:</label>
+        <input type="file" id="foto" name="foto" accept="image/*">
+
+        <label for="Mobilat">Mobilat complet:</label>
+        <input type="text" name="Mobilat" id="Mobilat" value="Da">
+        <span>*Da daca are cel putin un dulap, o masa, 
+          un scaun si cate un pat sau canapea in fiecare camera.
+          Daca nu atunci specifica ce lipseste.
+        </span>
+    
+        <label for="Electrocasnice">Electrocasnice de baza:</label>
+        <input type="text" name="Electrocasnice" id="Electrocasnice" value="Da">
+        <span>
+          *Da daca are cel putin masina de spalat si aragaz. 
+          Daca nu atunci specifica ce lipseste.
+        </span>
+
+        <label for="Racordari">Racordari de baza:</label>
+        <input type="text" name="Racordari" id="Racordari" value="Da">
+        <span>
+          *Da daca este racordat la energie electrica, 
+          apa curenta, gaz, canalizare, internet, cablu tv. 
+          Daca nu atunci specifica ce lipseste.
+        </span>
+        
+        <label for="Transport">Transport in comun:</label>
+        <input type="text" name="Transport" id="Transport" value="Da">
+        <span>
+          *Da daca o statie de transport in comun 
+          se afla la o distanta de  max.  500 metri fata de locuinta.
+          Daca nu specifica distanta aproximativa.
+        </span>
+        
+        <label for="Magazin">Magazin alimentar in apropiere:</label>
+        <input type="text" name="Magazin" id="Magazin" value="Da">
+        <span>
+          *Da daca magazinul alimentar 
+          se afla la o distanta de max. 500 metri fata de locuinta.
+          Daca nu specifica distanta aproximativa.
+        </span>
+       
+        <button type="submit">Adauga anunt</button>
+    </form>
+
+
+
+    <form autocomplete="off" id="cauta-camera-de-inchiriat">
+        <h3>Cauta o camera de inchiriat</h3>
+        <hr>
+
+        <label for="Localitate">Localitate:</label>
+        <input type="text" list="localitati" name="Localitate" id="Localitate">
+        
+        <datalist id="localitati">
+            <option value="Bucuresti">
+            <option value="Cluj">
+            <option value="Iasi">
+            <option value="Timisoara">
+            <option value="Brasov">
+        </datalist>
+
+        <label for="Zona">Zona:</label>
+        <input type="text" name="Zona" id="Zona">
+
+        <label for="Pret">Pret:</label>
+        <input type="tel" name="Pret" id="Pret">
+        
+        <button type="submit">Cauta camera</button>
+    </form>
+
+
+    <form autocomplete="off">
+
+      <h3>Actualizeaza datele personale</h3>
+      <hr>
+
+      <label for="Nume">Nume prenume:</label>
+      <input type="text" name="Nume" id="Nume">
+
+      <label for="caut-ofer-in-localitatea">Caut/Ofer in localitatea:</label>
+      <input type="text" name="caut-ofer-in-localitatea" id="caut-ofer-in-localitatea">
+
+      <label for="Buget">Buget:</label>
+      <input type="tel" name="Buget" id="Buget">
+
+      <label for="Telefon">Telefon:</label>
+      <input type="tel" name="Telefon" id="Telefon">
+
+      <label for="Email">Email:</label>
+      <input type="email" name="Email" id="Email">
+
+      <label for="profil">Adauga o poza de profil:</label>
+      <input type="file" id="profil" name="profil" accept="image/*">
+
+      <button type="submit">Actualizeaza datele</button>
+
+      
+    </form>
+
+    <button class="red">Sterge contul</button>
+
+
+
+     -->
+
+    
+      
+
+    
