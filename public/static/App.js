@@ -6,7 +6,7 @@ var auth = new Auth()
 auth.listen()
 
 var listing = new Listing()
-listing.add_listing()
+listing.listen()
 
 
 

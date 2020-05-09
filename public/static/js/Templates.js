@@ -176,7 +176,7 @@ export default templates = {
     </form>    
     `,
 
-    search_listing:`
+    listing_search_form:`
     <form autocomplete="off">
 
         <h3>Cauta o camera de inchiriat</h3>
@@ -202,5 +202,39 @@ export default templates = {
         <button type="submit">Cauta camera</button>
         
     </form>
-    `
+    `,
+
+    search_listing: (listings) => {
+
+        let lista_anunturi = []
+        listings.forEach( doc => {
+            //console.log(doc.id, " => ", doc.data())
+
+            let id = doc.id
+            let data = doc.data()
+
+            let anunt = `
+            <div class="card boxed" id="${id}">
+                <img src="${data["Foto"]}" alt="img">
+                <h2><a href="#">${data["Pret"]}&euro;, camera in ${data["Localitate"]}-${data["Zona"]}</a></h2>
+            </div>       
+            `
+            lista_anunturi.push(anunt)
+        })
+
+        let anunturi = document.createElement("div")
+        anunturi.setAttribute("class", "anunturi")
+        anunturi.innerHTML = lista_anunturi.join(" ")
+
+        let container = document.createElement("div")
+    
+        container.innerHTML = templates.listing_search_form
+        container.appendChild(anunturi)
+
+        return container
+    }
+
+
+
+
 }

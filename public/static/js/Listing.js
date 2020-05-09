@@ -10,6 +10,11 @@ import templates from "./Templates.js"
 
 export default class Listing {
 
+    listen() {
+        this.add_listing()
+        this.show_listings()
+    }
+
     add_listing() {
         el("#adauga_camera").addEventListener("click", event => {
             event.preventDefault()
@@ -73,11 +78,10 @@ export default class Listing {
     }
 
     show_listings() {
-
-        firebase.firestore().collection("listing").get().then( querySnapshot => {
-            querySnapshot.forEach( doc => {
-                console.log(doc.id, " => ", doc.data())
-
+        el("#home").addEventListener("click", event => {
+            event.preventDefault()
+            firebase.firestore().collection("listing").get().then( querySnapshot => {
+                render_template(templates.search_listing(querySnapshot))
             })
         })
     }

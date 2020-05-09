@@ -47,7 +47,15 @@ const name_from_email = (email) => {
 }
 
 const render_template = (template, scrollTo="h3") => {
-    main.innerHTML = template
+
+    main.innerHTML = ""
+
+    if(template === template.toString()){
+        main.innerHTML = template
+    }else{
+        main.appendChild(template)
+    }
+        
     try {
         document.querySelector(scrollTo).scrollIntoView()
     }

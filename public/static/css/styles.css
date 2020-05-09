@@ -79,6 +79,7 @@ form, .form {
     gap: 10px;
     width: 320px;
     padding-bottom: 4rem;
+    margin: 0 auto;
 }
 
 @media only screen and (min-width: 321px) {
@@ -121,6 +122,11 @@ main > .card {
     text-align: center;
     font-weight: bold;
     height: 20px;
+}
+
+.anunturi {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 400px));
 }
 
 .grey {
