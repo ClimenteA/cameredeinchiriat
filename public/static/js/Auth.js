@@ -46,7 +46,7 @@ export default class Auth {
                     .then(data => {
                         console.info("Esti logat!") 
                         this.user_state()
-                        render_template(templates.pagina_utilizator())
+                        templates.pagina_utilizator()
                     }).catch(error => {
                         console.error(error.message)
                         toast("Email sau parola gresite! Ti-ai uitat parola? Ai cont?", "error")
@@ -54,7 +54,7 @@ export default class Auth {
                     })
                 })
             } else {
-                render_template(templates.pagina_utilizator())
+                templates.pagina_utilizator()
             }
         })
     }

@@ -8,6 +8,7 @@ import {
 import templates from "./Templates.js"
 
 
+
 export default class Listing {
 
     listen() {
@@ -86,8 +87,24 @@ export default class Listing {
         })
     }
 
-    show_user_listings() {
 
+    user_listings() {
+        
+        let snap_anunturi = {}
+
+        firebase.firestore().collection("listing")
+        .where("UserId", "==", firebase.auth().currentUser.uid)
+        .get()
+        .then( querySnapshot => {
+            snap_anunturi = querySnapshot
+            //return querySnapshot
+        })
+        .catch(error => {
+            console.error(error)
+            //toast("", "error")
+        })
+
+        return snap_anunturi
     }
 
     delete_listing() {

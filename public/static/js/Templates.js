@@ -1,3 +1,9 @@
+import {
+    toast,
+    render_template,
+} from "./Utils.js"
+
+
 let templates
 export default templates = {
 
@@ -46,7 +52,10 @@ export default templates = {
     </form>
     `,
 
-    pagina_utilizator: (user = firebase.auth().currentUser) => {
+    user_page: (anunturi_string) => {
+        
+        let user = firebase.auth().currentUser
+
         return `
         <div class="boxed form">
             <img class="avatar" src="${user.photoURL}">
@@ -60,14 +69,45 @@ export default templates = {
         <div class="boxed form">
             <h4>Anunturi active</h4>
             <ul id="anunturi-active">
-               <!-- <li>TODO: Camera in &euro; <span title="sterge anuntul" class="hand red-text p-2">X</span></li> -->
+                ${anunturi_string}
             </ul>
         </div>
         
         <button class="mt-2" id="update_account">Actualizeaza datele</button>
         <button class="red mt-2 " id="delete_account">Sterge contul</button>
-        `    
+        `
     },
+
+    pagina_utilizator: () => {
+
+        firebase.firestore().collection("listing")
+        .where("UserId", "==", firebase.auth().currentUser.uid)
+        .get()
+        .then( querySnapshot => {
+
+            let anunturi_utilizator = []
+            querySnapshot.forEach( doc => {
+
+                let id = doc.id
+                let data = doc.data()
+
+                let li = `<li id="${id}" class="mb-20"><span title="sterge anuntul" class="hand red-text">X</span>
+                          Camera in ${data["Localitate"]}-${data["Zona"]} ${data["Pret"]}&euro;</li>` 
+                
+                anunturi_utilizator.push(li)
+            })
+
+            let anunturi_string = anunturi_utilizator.join(" ")
+
+            render_template(templates.user_page(anunturi_string))
+    
+        })
+        .catch(error => {
+            console.error(error)
+            toast("Momentan nu ai postat nici un anunt.")
+        })
+    },
+
 
     update_account: `
     <form autocomplete="off">
