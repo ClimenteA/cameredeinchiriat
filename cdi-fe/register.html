@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./static/styles.css">
+    <title>Document</title>
+</head>
+<body class="light-purple blocuri">
+
+    <header>
+        <nav>
+            <img class="logo" src="./static/logo_white.svg" alt="camere de inchiriat">        
+            <img class="menu" src="./static/menu_white.svg" alt="meniu">
+        </nav>
+
+        <aside class="menu-expanded hide">
+            <img src="./static/close.svg" alt="X" id="close-menu">
+            <ul>
+                <li>Intra in cont</li>
+                <li>Adauga un anunt</li>
+                <li>Cauta o camera</li>
+                <li>Cauta un coleg</li>
+                <li>Iesi din cont</li>
+            </ul>
+        </aside>
+    </header>
+     
+<main class="center">
+    <form>
+
+        <div class="input">
+            <label class="white-text" for="email">Email</label>
+            <input type="email" name="email" id="email">    
+        </div>
+        
+        <div class="input">
+            <label class="white-text" for="pass1">Parola</label>
+            <input type="password" name="pass1" id="pass1">    
+        </div>
+        
+        <div class="input">
+            <label class="white-text" for="pass2">Confirma parola</label>
+            <input type="pass2" name="pass2" id="pass2">    
+        </div>
+        
+
+        <button type="submit" class="btn dark-green">Creaaza cont</button>
+
+        <div class="helpers">
+            <a href="#">Am cont!</a>
+            <a href="#">Am uitat parola!</a>
+        </div>
+
+    </form>
+</main>
+
+
+<!-- <footer>
+    <a href="#">Politica Cookies</a>
+    <a href="#">Politica de Confidentialitate</a>
+    <a href="#">Termeni si Conditii</a>
+    <a href="#">Raporteaza o problema</a>
+    <a href="#">Contact</a>
+</footer> -->
+
+
+<script defer src="https://unpkg.com/typewriter-effect@latest/dist/core.js"></script>
+<script defer type="module" src="./static/App.js"></script>
+</body>
+</html>
