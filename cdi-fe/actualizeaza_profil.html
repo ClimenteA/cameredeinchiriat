@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./static/styles.css">
-    <title>camere de inchiriat</title>
+    <title>Actualizeaza profil</title>
 </head>
 <body class="light-green blocuri">
 
@@ -26,17 +26,44 @@
         </aside>
     </header>
      
-<main>
-    <section>
+<main class="center">
 
-        <button class="btn heavy-purple mt-4 large">Creaza un cont</button>
+    <form>
 
-        <h1 class="erica-font flow-text">
-            Imparte chiria si pastreaza banii 
-            <br> pentru <span id="motive">vacante</span>
-        </h1>
+        <div class="input">
+            <label class="white-text" for="nume">Nume complet</label>
+            <input type="text" name="nume" id="nume">    
+        </div>
+        
+        <div class="input">
+            <label class="white-text" for="localitate">Caut chirie in orasul</label>
+            <input type="text" name="localitate" id="localitate">    
+        </div>
+        
+        <div class="input">
+            <label class="white-text" for="buget">Buget pe luna</label>
+            <input type="tel" name="buget" id="buget">    
+        </div>
 
-    </section>
+        <div class="input">
+            <label class="white-text" for="telefon">Numar telefon</label>
+            <input type="tel" name="telefon" id="telefon">    
+        </div>
+
+        <div class="input">
+            <label class="fileContainer">
+                Foto profil
+                <input type="file" name="foto" id="foto"/>
+            </label>
+        </div>
+
+        <button type="submit" class="btn dark-green">Aplica modificarile</button>
+    </form>
+
+    <div class="mt-2">
+        <a href="#" class="btn red">Sterge contul</a>
+    </div>
+
 </main>
 
 

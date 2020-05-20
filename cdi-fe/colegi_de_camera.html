@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./static/styles.css">
+    <title>Colegi de camera</title>
+</head>
+<body class="light-purple blocuri">
+
+    <header>
+        <nav>
+            <img class="logo" src="./static/logo_white.svg" alt="camere de inchiriat">        
+            <img class="menu" src="./static/menu_white.svg" alt="meniu">
+        </nav>
+
+        <aside class="menu-expanded hide">
+            <img src="./static/close.svg" alt="X" id="close-menu">
+            <ul>
+                <li>Intra in cont</li>
+                <li>Adauga un anunt</li>
+                <li>Cauta o camera</li>
+                <li>Cauta un coleg</li>
+                <li>Iesi din cont</li>
+            </ul>
+        </aside>
+    </header>
+     
+<main class="center">
+
+    <form>
+
+        <div class="input center-text">
+            <label class="white-text" for="localitate">Localitate</label>
+            <input type="text" name="localitate" id="localitate">    
+        </div>
+        
+        <div class="input center-text">
+            <label class="white-text" for="buget">Buget</label>
+            <input type="tel" name="buget" id="buget">    
+        </div>
+
+        <button type="submit" class="btn large heavy-purple" id="camera_coleg">Cauta camera</button>
+        
+        <div class="mt-2">
+            <div class="switch">
+                <label>
+                    <span class="light-green-text">Camera</span> 
+                    <span>
+                        <input type="checkbox" name="camera" id="camera">
+                        <span class="lever"></span>
+                    </span>
+                    <span class="light-purple-text">Coleg</span>
+                </label>
+            </div>
+        </div>
+        
+    </form>
+
+    <section class="utilizatori mb-4">
+
+        <div class="user moderate-purple">
+            <img src="./static/ca.jpg" alt="User image">
+            <h6>Climente Alin</h6>
+
+            <span>Iasi, buget 200E</span>
+            <span>0724242424</span>
+            <span>climente.alin@gmail.com</span>    
+        </div>
+
+
+        <div class="user moderate-purple">
+            <img src="./static/ca.jpg" alt="User image">
+            <h6>Climente Alin</h6>
+
+            <span>Iasi, buget 200E</span>
+            <span>0724242424</span>
+            <span>climente.alin@gmail.com</span>    
+        </div>
+
+
+        <div class="user moderate-purple">
+            <img src="./static/ca.jpg" alt="User image">
+            <h6>Climente Alin</h6>
+
+            <span>Iasi, buget 200E</span>
+            <span>0724242424</span>
+            <span>climente.alin@gmail.com</span>    
+        </div>
+
+
+        <div class="user moderate-purple">
+            <img src="./static/ca.jpg" alt="User image">
+            <h6>Climente Alin</h6>
+
+            <span>Iasi, buget 200E</span>
+            <span>0724242424</span>
+            <span>climente.alin@gmail.com</span>    
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- <footer>
+    <a href="#">Politica Cookies</a>
+    <a href="#">Politica de Confidentialitate</a>
+    <a href="#">Termeni si Conditii</a>
+    <a href="#">Raporteaza o problema</a>
+    <a href="#">Contact</a>
+</footer> -->
+
+
+<script defer src="https://unpkg.com/typewriter-effect@latest/dist/core.js"></script>
+<script defer type="module" src="./static/App.js"></script>
+</body>
+</html>
