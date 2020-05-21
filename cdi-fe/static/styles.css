@@ -94,14 +94,6 @@
 }
 
 
-header + main {
-    height: 100vh;
-}
-
-main {
-    margin-bottom: 4rem;
-}
-
 body {
     max-width: 960px;
     min-width: 300px;
@@ -111,12 +103,61 @@ body {
     outline: 0 !important;
 }
 
-button, input {
-    outline: 0;
+
+
+@media only screen and (max-width: 380px) {
+    body {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
 }
+
+
 
 *, html {
     font-family: var(--fredoka-one);
+}
+
+
+header + main {
+    min-height: calc(100vh - 100px);
+}
+
+footer {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    justify-items: center;
+    margin-top: 4rem;
+    padding: 2rem;
+    color: var(--dark-purple);
+    border-radius: 20px;
+    background: var(--light-grey);
+}
+
+footer > a {
+    margin-right: 12px;
+}
+
+@media only screen and (max-width: 640px) {
+    footer {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+
+/* footer > a::after {
+    content: "|";
+    margin-left: 5px;
+}
+
+footer > a:last-child:after {
+  content: '';
+} */
+
+
+button, input {
+    outline: 0;
 }
 
 
@@ -155,6 +196,11 @@ body {
     cursor: pointer;
     transition: transform 0.2s;
     user-select: none;
+}
+
+
+.menu-expanded  a {
+    text-decoration: none;
 }
 
 
@@ -519,7 +565,7 @@ input:focus, textarea:focus {
     cursor: pointer;
     display: block;
     font-size: 999px;
-    filter: alpha(opacity=0);
+    /* filter: alpha(opacity=0); */
     min-height: 100%;
     min-width: 100%;
     opacity: 0;
@@ -782,24 +828,16 @@ input[type=checkbox]:not(:disabled).tabbed:focus ~ .lever::before {
     object-fit: contain;
 }
 
-/* 
 
-.anunt.big {
-    width: max-content;
-    padding: 20px;
-    box-shadow: none;
-    background: transparent;
-    color: var(--heavy-purple);
-    font-size: x-large;
-}
-
-.anunt.big img {
-    height: 300px;
-    object-fit: contain;
+.docs {
+    margin-top: 4rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--dark-grey);
+    color: var(--white); 
+    padding-left: 2rem;
+    padding-right: 2rem;
+    padding-bottom: 2rem;
     border-radius: 20px;
-    
+    padding-top: 1rem;
 }
 
-.big:hover {
-    box-shadow: none;
-} */
