@@ -1,0 +1,325 @@
+@import "./reset.css";
+
+
+*, body {
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: rgb(243, 243, 243);
+    min-width: 320px;
+}
+
+header {
+    margin-bottom: 25px;
+}
+
+header > nav {
+    background: rgb(113, 100, 204);
+    color: white;
+    height: 25px;
+    padding: 10px;
+}
+
+header > nav > ul > li {
+    display: inline;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-left: 10px;
+    line-height: 25px;
+}
+
+header > nav > a {
+    line-height: 20px;
+}
+
+header > nav > ul {
+    float: right;
+}
+
+header + main {
+    min-height: 100vh;
+}
+
+main {
+    display: grid;
+    place-items: center center;
+}
+
+footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: space-around;
+    background: rgb(52, 43, 110); 
+    color: white;
+    
+    margin-top: 6rem;
+    min-height: 100px;
+    padding: 10px;
+}
+
+footer > a {
+    margin: 10px;
+}
+
+hr {
+    width: 100%;
+    margin: 0;
+}
+
+.boxed > ul {
+    margin-top:10px;
+    margin-bottom:10px;
+}
+
+form, .form {
+    display: grid;
+    margin: 10px;
+    flex-direction: column;
+    gap: 10px;
+    width: 320px;
+    padding-bottom: 4rem;
+    margin: 0 auto;
+}
+
+@media only screen and (min-width: 321px) {
+    form, .form  {
+        max-width: 320px;
+    }
+}
+
+
+form > h3 {
+    font-weight: bold;
+    padding-top: 2rem;
+}
+
+
+button {
+    background: rgb(86, 165, 86);
+    border: none;
+    color: white;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+img {
+    width: 100%;
+    height: auto;
+}
+
+
+main > .card {
+    margin: 10px;
+}
+
+.card > h2 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: bold;
+    height: 20px;
+}
+
+.anunturi {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 400px));
+}
+
+.grey {
+    background: gray;
+}
+.grey-text {
+    color: gray;
+}
+
+
+.ml-10 {
+    margin-left: 5px;
+}
+
+.ml-2 {
+    margin-left: 2rem;
+}
+
+.ml-4 {
+    margin-left: 4rem;
+}
+
+.mt-2 {
+    margin-top: 2rem;
+}
+
+.mt-4 {
+    margin-top: 4rem;
+}
+
+.mb-2 {
+    margin-bottom: 2rem;
+}
+
+.mb-4 {
+    margin-bottom: 4rem;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+
+.p-2 {
+    padding: 2rem;
+}
+
+.hand {
+    cursor: pointer;
+}
+
+
+.boxed {
+    background: seashell;
+    border: 2px solid lightgray;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+    place-items: center center;
+}
+
+.boxed > h4 {
+    font-weight: bold;
+    height: 20px;
+}
+
+.boxed > span {
+    margin-bottom: 10px;
+} 
+
+
+.avatar {
+    border-radius: 50%;  
+    width: 100px;
+    height: 100px; 
+    object-fit: cover;
+}
+
+
+
+
+
+.anunt {
+    margin: 10px;
+}
+
+.anunt > hr {
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.anunt h4 {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.anunt h2 {
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+
+
+table {
+    table-layout: fixed;
+    margin-top: 10px;
+    width: 100%;
+    border-collapse: collapse;
+    border: 2px solid lightgray;
+  }
+  
+thead {
+    background: lightgray;
+}
+  
+th, td {
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px solid lightgray;
+}
+
+th {
+    font-weight: bolder;
+}
+
+.descriere-anunt > p {
+    margin-top: 10px;
+}
+
+.descriere-anunt > h4 {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.sumar-anunt > p {
+    font-size: 12px;
+    color: gray;
+}
+
+textarea {
+    padding: 10px;
+    font-family: inherit;
+}
+
+form > button {
+    height: 50px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+#adauga-camera-de-inchiriat > input[type="file"] {
+    margin-bottom: 20px;
+}
+
+form > span {
+    font-size: 12px;
+    margin-left: 5px;
+    color: gray;
+}
+
+.red {
+    background: rgb(240, 88, 88);
+}
+
+.bold {
+    font-weight: bold;
+}
+
+
+.red-text {
+    font-weight: bold;
+    color: rgb(240, 88, 88);
+}
+
+input {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px;
+}
+
+.anunturi-active {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+
+.hide {
+    display: none;
+}

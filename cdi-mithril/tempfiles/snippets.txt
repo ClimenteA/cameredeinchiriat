@@ -1,0 +1,83 @@
+
+Database
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /listing/{document=**} {
+    	
+      function isLoggedIn() {
+        return request.auth.uid != null;
+      }
+      
+      function hasEmailVerified() {
+      	return request.auth.token.email_verified;
+      }
+      
+      function dataAuthor() {
+      	return request.auth.uid == resource.data.author;
+      }
+      
+      function isAdmin() {
+      	//Add email of the admin
+      	return request.auth.token.email == "climente.alin@gmail.com";
+      }
+
+    	allow read: if true;
+      allow create: if isLoggedIn() && hasEmailVerified();
+      allow delete allow update: if isLoggedIn() 
+      					    						 && hasEmailVerified()
+                    						 && dataAuthor()
+                    						 || isAdmin();
+    }
+  }
+}
+
+
+
+
+Storage
+
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+  
+  	function isImage(){
+    	return request.resource.contentType.matches('image/.+');
+    }
+
+    function isLoggedIn() {
+      return request.auth.uid != null;
+    }
+
+    function hasEmailVerified() {
+      return request.auth.token.email_verified;
+    }
+
+    function dataAuthor() {
+      return request.auth.uid == resource.data.author;
+    }
+
+    function isAdmin() {
+      //Add email of the admin
+      return request.auth.token.email == "climente.alin@gmail.com";
+    }
+
+  
+		match /userImage/{UserID}/{imageName} {
+    	allow read: if true;
+      allow create: if isLoggedIn() && hasEmailVerified() && isImage();
+      allow delete allow update: if isLoggedIn() && hasEmailVerified() && dataAuthor() || isAdmin();
+      					    
+    }
+  
+    match /listingImage/{ListingID}/{imageName} {
+    	allow read: if true;
+      allow create: if isLoggedIn() && hasEmailVerified() && isImage();
+      allow delete allow update: if isLoggedIn() && hasEmailVerified() && dataAuthor() || isAdmin();
+      
+    }
+  }
+  
+}
