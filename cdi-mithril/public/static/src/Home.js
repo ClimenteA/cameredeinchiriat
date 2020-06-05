@@ -1,4 +1,5 @@
 import { close_menu } from "./NavFooter.js"
+import { clear_json } from "./Utils.js"
 
 
 
@@ -37,6 +38,7 @@ function prep() {
     document.querySelector("title").innerText = "Camere de inchiriat"
     close_menu()
     type_motive()
+    clear_json("last_ref")
 }
 
 

@@ -90,21 +90,18 @@ function name_from_email(email) {
 }
 
 
-// function getCircularReplacer() {
 
-//     const seen = new WeakSet()
+function parse_form(form_el=null) {
+
+    if (!form_el) {
+        var form_el = document.querySelector("form")
+    }
     
-//     return (key, value) => {
-//       if (typeof value === "object" && value !== null) {
-//         if (seen.has(value)) {
-//           return
-//         }
-//         seen.add(value)
-//       }
-//       return value
-//     }
-// }
-  
+    form_data = new FormData(form_el)
+    form_data = Object.fromEntries(form_data)
+    
+    return form_data
+}
 
 
 
@@ -128,8 +125,34 @@ function clear_json(key=null){
 }
 
 
-clear_json()
+function clean_str(str) {
+    str = str.charAt(0).toUpperCase() + str.toLowerCase().slice(1)
+    str = str.replace(/\s+/g,' ').trim()
+    return str
+}
+
+
+
+function get_form_data(form_el=null) {
+
+    if (!form_el){
+        form_el = document.querySelector("form") 
+    }
     
+    let form_data
+
+    try {
+        form_data = new FormData(form_el)    
+        form_data = Object.fromEntries(form_data)
+    } catch (error) {
+        form_data = null
+    }
+
+    return form_data
+}
+
+
+
 
 export {
     freeze_form,
@@ -138,5 +161,8 @@ export {
     name_from_email,
     save_json,
     get_json,
-    clear_json
+    clear_json,
+    parse_form,
+    clean_str,
+    get_form_data
 }

@@ -2,7 +2,8 @@ import { close_menu } from "./NavFooter.js"
 import { 
     unfreeze_form,
     freeze_form, 
-    toast 
+    toast, 
+    clean_str
 } from "./Utils.js"
 
 
@@ -30,6 +31,7 @@ async function adauga_camera(event){
 
         let foto = form_data.foto
         delete form_data.foto
+        form_data.localitate = clean_str(form_data.localitate)
         form_data.pret = Number(form_data.pret.trim())
 
         let docRef = await firebase.firestore().collection('listing').add(form_data)

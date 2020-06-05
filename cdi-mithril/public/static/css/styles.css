@@ -190,7 +190,7 @@ src: url("FredokaOne-Regular.ttf");
 
 *, html {
     font-family: "Fredoka One";
-    word-wrap: break-word;
+    word-wrap: break-word !important;
 }
 
 body {
@@ -276,6 +276,7 @@ body {
     border-radius: 3.7px;
     box-shadow: var(--shadow);
     padding: 20px;
+    z-index: 99;
 }
 
 
@@ -768,7 +769,7 @@ form {
 
 .anunt {
     position: relative;
-    border-radius: 20px;
+    border-radius: 10px;
     background: var(--moderate-purple);
     color: var(--white);
     /* border: 4px solid var(--white); */

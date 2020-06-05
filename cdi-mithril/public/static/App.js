@@ -30,7 +30,6 @@ import ActualizeazaCont from "./src/ActualizeazaCont.js"
 import Error404 from "./src/404.js"
 
 
-
 const header = document.querySelector("header") 
 const main = document.querySelector("main")
 const footer = document.querySelector("footer")
@@ -39,7 +38,6 @@ const footer = document.querySelector("footer")
 // Static components
 m.mount(header, Nav)
 m.mount(footer, Footer)
-
 
 
 // Main contect changed based on route

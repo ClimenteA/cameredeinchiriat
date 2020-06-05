@@ -5,7 +5,10 @@ import {
     toast,
     save_json,
     get_json,
-    clear_json
+    clear_json,
+    parse_form,
+    clean_str,
+    get_form_data
 } from "./Utils.js"
 
 
@@ -23,40 +26,14 @@ function toggle_cauta(){
 
 function prep(){
     document.body.className = "light-green blocuri"
-    document.querySelector("main").removeAttribute("class")
+    document.querySelector("main").className = "center"
     document.querySelector("title").innerText = "Cauta camera"
     close_menu()
 }
 
 
+function parse_ref_data(ref_data){   
 
-// // [START paginate]
-// var first = db.collection("cities")
-// .orderBy("population")
-// .limit(25);
-
-// return first.get().then(function (documentSnapshots) {
-// // Get the last visible document
-// var lastVisible = documentSnapshots.docs[documentSnapshots.docs.length-1];
-// console.log("last", lastVisible);
-
-// // Construct a new query starting at this document,
-// // get the next 25 cities.
-// var next = db.collection("cities")
-//   .orderBy("population")
-//   .startAfter(lastVisible)
-//   .limit(25);
-// });
-// // [END paginate]
-
-
-
-// .where("pret", "<=", 100)
-// .where("localitate", "in", ["Iasi"])
-
-
-function parse_ref_data(ref_data){
-    
     let anunturi = []
     ref_data.forEach(res => {
         let jdata = {id:res.id, camera:res.data()}
@@ -67,201 +44,88 @@ function parse_ref_data(ref_data){
 }
 
 
-async function get_data(form_data, last_ref=null){
+function get_search_data() {
 
-    let pgitems = 2
-    let localitate = form_data.localitate.trim()
-    let buget = Number(form_data.buget.trim())
-    
- 
-    let ref = firebase.firestore().collection("listing")
+    let localitate = ""
+    let buget = ""
+    let optiune = ""
 
-    console.log("Inital last_ref: ", last_ref)
-    
-    if (localitate && buget){     
+    let form_data = get_form_data()
 
-        if (last_ref === null){
-            var ref_data = await ref.where("localitate", "in", [localitate])
-                                    .where("pret", "<=", buget)
-                                    .limit(pgitems)
-                                    .get()
-        }
-        else {
-            var ref_data = await ref.where("localitate", "in", [localitate])
-                                    .where("pret", "<=", buget)
-                                    .orderBy(firebase.firestore.FieldPath.documentId())
-                                    .startAfter(last_ref)
-                                    .limit(pgitems)
-                                    .get()
-        }
-        
-        console.log("localitate & buget filter: ", localitate, buget)                
-    
+    if (form_data){
+        localitate = clean_str(form_data.localitate)
+        buget = Number(clean_str(form_data.buget))
+        optiune = form_data.optiune    
     }
 
-    else if (localitate){
+    return localitate, buget, optiune
+}
 
-        if (last_ref === null){
-            var ref_data = await ref.where("localitate", "in", [localitate])
-                                    .limit(pgitems)
-                                    .get()
-        }
-        else {
-            var ref_data = await ref.where("localitate", "in", [localitate])
-                                    .orderBy(firebase.firestore.FieldPath.documentId())
-                                    .startAfter(last_ref)
-                                    .limit(pgitems)
-                                    .get()
-        }
-        
-        console.log("localitate filter: ", localitate, buget)
-        
+
+const pgitems=2
+
+function build_query(ref, localitate, buget, last_ref){
+
+    // Build query
+    if (localitate && buget){   
+        ref = ref.where("localitate", "in", [localitate]).where("pret", "<=", buget)         
+    }
+    else if (localitate){
+        ref = ref.where("localitate", "in", [localitate])                  
     }
     else if (buget){
-
-        if (last_ref === null){
-            var ref_data = await ref.where("pret", "<=", buget)
-                                    .limit(pgitems)
-                                    .get()
-        }
-        else {
-            var ref_data = await ref.where("pret", "<=", buget)
-                                    .orderBy(firebase.firestore.FieldPath.documentId())
-                                    .startAfter(last_ref)
-                                    .limit(pgitems)
-                                    .get()
-        }
-
-        console.log("buget filter: ", localitate, buget)
-        
+        ref = ref.where("pret", "<=", buget)
     }
 
+    // Check last ref 
+    if (last_ref === null) {
+        ref = ref.limit(pgitems)
+    }
     else {
-
-        if (last_ref === null){
-            var ref_data = await ref.limit(pgitems)
-                                    .get()
-
-        }
-        else {
-
-            var ref_data = await ref.orderBy(firebase.firestore.FieldPath.documentId())
-                                    .startAfter(last_ref)
-                                    .limit(pgitems)
-                                    .get()
-        }
-   
-        console.log("no filter: ",localitate, buget)
-
+        ref = ref.orderBy(firebase.firestore.FieldPath.documentId())
+                 .startAfter(last_ref)
+                 .limit(pgitems)
     }
 
+    return ref
+}
 
 
-    var last_ref = ref_data.docs[ref_data.docs.length-1].id
+async function get_data(){
 
-    save_json("last_ref", last_ref)
+    let last_ref = get_json("last_ref")
+    let localitate, buget, optiune = get_search_data()
 
+    let ref = firebase.firestore().collection("listing")
+    ref = build_query(ref, localitate, buget, last_ref)
+
+    // Parse data
+
+    let ref_data = await ref.get()
+    
+    try {
+        last_ref = ref_data.docs[ref_data.docs.length-1].id
+        save_json("last_ref", last_ref)
+    } catch (error) {
+        toast("Nu mai sunt anunturi!", false, 5000)
+    }
+    
     let anunturi = parse_ref_data(ref_data)
-
-    console.log("last_ref ", last_ref)
-    // console.log("ref_data ", ref_data)
-    // console.log("anunturi ", anunturi)
-
+    
     return anunturi
 }
 
 
-
-async function get_listings(){
-
-    let form_data = new FormData(document.querySelector("form"))
-    form_data = Object.fromEntries(form_data)
-
-    try {
-        
-        let last_ref = get_json("last_ref")
-        let anunturi = await get_data(form_data, last_ref)
-        return anunturi
-
-    } catch (error) {
-        console.error(error)
-        toast("Nu mai sunt anunturi", false, 8000)
-    }
-    
-}
-
-
-
-
-async function cauta_anunturi(event){
-    event.preventDefault()
-
-    let form_data = new FormData(event.target)
-    form_data = Object.fromEntries(form_data)
-
-    console.log(form_data)
-
-    try {
-
-        freeze_form(event.target)
-
-        await get_data(form_data)
-
-        unfreeze_form(event.target)
-        
-
-    } catch (error) {
-        console.error(error)
-
-    }
-    
-}
-
-
-
-const Camera = {
-
-    view: () => {
-        return m(".anunt", [
-            m("img.foto-camera", {src:camera.foto, alt:"Foto camera"}),
-            m("img.foto-user", {src:camera.fotoUser, alt:"Foto user"}),
-            m("span.title", camera.titlu)
-        ])
-    }
-}
-
-
-
-
-const Listings = {
-    oninit: async (vnode) => {
-        vnode.state.data = await get_listings()
-        console.log("vnode.state.data ", vnode.state.data)
-    },
-    view: vnode => {
-
-        console.log("vnode.state.data ", vnode.state.data)
-        
-        return m("section.anunturi.mb-4", [
-            
-            vnode.state.data.map(data => {
-                return m("span", JSON.stringify(data, undefined, 2))
-            }),
-    
-            m("button", {class:"btn", onclick:get_listings}, "Arata mai multe")
-        ])
-    }
-}
-
-
-
 const FormAnunturi = {
-    oninit: vnode => {
-        console.log(vnode.attrs)
-    },
     oncreate: prep,
-    view: () => {
-        return m("form", {onsubmit:ev=>{cauta_anunturi(ev)}}, [
+    view: vnode => {
+        return m("form", {onsubmit:event => {
+            event.preventDefault()
+            freeze_form(event.target)
+            vnode.attrs.get_more_data() //NOK..
+            unfreeze_form(event.target)
+            m.redraw()
+        }}, [
             m(".input", [
                 m("label", {for:"localitate"}, "Localitate"),
                 m("input", {type:"text", name:"localitate", id:"localitate"})
@@ -275,7 +139,7 @@ const FormAnunturi = {
             m("button", {type:"submit", class:"btn large heavy-purple", id:"cauta"}, "Cauta camera"),
 
             m(".input", {style:"margin-top:1rem;"}, [
-                m("select", {name:"camera-coleg", id:"optiune", onchange:toggle_cauta}, [
+                m("select", {name:"optiune", id:"optiune", onchange:toggle_cauta}, [
                     m("option", {value:"camera"}, "Camera"),
                     m("option", {value:"coleg"}, "Coleg"),
                 ])
@@ -286,17 +150,53 @@ const FormAnunturi = {
 }
 
 
-const VeziAnunturi = {
-    oninit: () => {
-        clear_json("last_ref")
-    },
+const Camera = {
     view: vnode => {
-        return m("div.center", [
-            m(FormAnunturi),
-            m(Listings)
+        return m(".anunt", {id:vnode.attrs.id}, [
+            m("img.foto-camera", {src:vnode.attrs.camera.foto}),
+            m("span.title", 
+            vnode.attrs.camera.localitate + ", " + vnode.attrs.camera.pret + " Euro")
         ])
     }
 }
 
 
+const Anunturi = {
+    view: vnode => {
+        return m("section.anunturi.mb-2", [
+            vnode.attrs.listings ? vnode.attrs.listings.map(obj => {
+                return m(Camera, obj) 
+            }) : toast("Se incarca anunturile...", true, 1000)
+        ])
+    }
+}
+
+
+const VeziAnunturi = () => {
+
+    let listings 
+
+    function get_more_data(){
+        get_data().then(data => {
+            listings=data
+            m.redraw()
+        })
+    }
+    
+    get_more_data()
+    
+    return {
+        oninit: prep,
+        view: vnode => {
+            return [m(FormAnunturi, {get_more_data:get_more_data}),
+                    m(Anunturi, {listings: listings}),
+                    m("button.btn", {onclick:get_more_data}, "Arata mai multe")
+                ]
+        }
+    }
+}
+
+
+
 export default VeziAnunturi
+
