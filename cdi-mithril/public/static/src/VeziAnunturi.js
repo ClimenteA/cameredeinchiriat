@@ -7,8 +7,7 @@ import {
     get_json,
     clear_json,
     parse_form,
-    clean_str,
-    get_form_data
+    clean_str
 } from "./Utils.js"
 
 
@@ -44,24 +43,6 @@ function parse_ref_data(ref_data){
 }
 
 
-function get_search_data() {
-
-    let localitate = ""
-    let buget = ""
-    let optiune = ""
-
-    let form_data = get_form_data()
-
-    if (form_data){
-        localitate = clean_str(form_data.localitate)
-        buget = Number(clean_str(form_data.buget))
-        optiune = form_data.optiune    
-    }
-
-    return localitate, buget, optiune
-}
-
-
 const pgitems=2
 
 function build_query(ref, localitate, buget, last_ref){
@@ -91,11 +72,24 @@ function build_query(ref, localitate, buget, last_ref){
 }
 
 
-async function get_data(){
+async function get_data(form_el=null){
+    
+    let form_data
+    if (form_el) {
+        form_data = Object.fromEntries(new FormData(form_el))
 
+        if (Object.keys(form_data).length === 0) {
+            form_data = {localitate:null, buget:null, optiune:"camera"}
+        }
+    }
+
+    console.log(form_data)
+
+    let localitate = clean_str(form_data.localitate)
+    let buget = Number(clean_str(form_data.buget))
+    // let optiune = form_data.optiune
+    
     let last_ref = get_json("last_ref")
-    let localitate, buget, optiune = get_search_data()
-
     let ref = firebase.firestore().collection("listing")
     ref = build_query(ref, localitate, buget, last_ref)
 
@@ -117,14 +111,13 @@ async function get_data(){
 
 
 const FormAnunturi = {
-    oncreate: prep,
     view: vnode => {
         return m("form", {onsubmit:event => {
             event.preventDefault()
             freeze_form(event.target)
-            vnode.attrs.get_more_data() //NOK..
+            vnode.attrs.get_listings(event.target) 
             unfreeze_form(event.target)
-            m.redraw()
+            // m.redraw()
         }}, [
             m(".input", [
                 m("label", {for:"localitate"}, "Localitate"),
@@ -172,31 +165,33 @@ const Anunturi = {
 }
 
 
-const VeziAnunturi = () => {
 
-    let listings 
-
-    function get_more_data(){
-        get_data().then(data => {
-            listings=data
+const Listings =  {
+    listings: [],
+    get_listings: async (form_el=null) => {
+            // get_data returns n items each time is called
+            // it's a list like [{some:"data"}, {other:"data"}]
+            let objectlist = await get_data(form_el)   
+            Listings.listings = Listings.listings.concat(objectlist)
             m.redraw()
-        })
-    }
-    
-    get_more_data()
-    
-    return {
-        oninit: prep,
-        view: vnode => {
-            return [m(FormAnunturi, {get_more_data:get_more_data}),
-                    m(Anunturi, {listings: listings}),
-                    m("button.btn", {onclick:get_more_data}, "Arata mai multe")
-                ]
+        },
+    oncreate: () => {
+            prep()
+            Listings.get_listings()
+        },
+    view: vnode => {
+        return [m(FormAnunturi, {get_listings:Listings.get_listings}),
+                m(Anunturi, {listings: Listings.listings}),
+                m("button.btn", {onclick:Listings.get_listings}, "Arata mai multe")
+            ]
         }
-    }
 }
 
 
+// https://tinyurl.com/y9zkw4ev
+// https://flems.io/#0=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-JUMwDKC4bxcBQNMQFGhFA0REN-aQnQpBoEeM8N4vxsB3mBOzF4u7v4AAFuS0CEGiG9sY90cCHguHQYL7qKDIPObAxgGzKCAA
+
+let VeziAnunturi = Listings
 
 export default VeziAnunturi
 

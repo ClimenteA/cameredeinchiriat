@@ -133,24 +133,6 @@ function clean_str(str) {
 
 
 
-function get_form_data(form_el=null) {
-
-    if (!form_el){
-        form_el = document.querySelector("form") 
-    }
-    
-    let form_data
-
-    try {
-        form_data = new FormData(form_el)    
-        form_data = Object.fromEntries(form_data)
-    } catch (error) {
-        form_data = null
-    }
-
-    return form_data
-}
-
 
 
 
@@ -163,6 +145,5 @@ export {
     get_json,
     clear_json,
     parse_form,
-    clean_str,
-    get_form_data
+    clean_str
 }
