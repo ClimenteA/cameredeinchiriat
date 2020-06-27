@@ -220,7 +220,7 @@ const DescriereCamera = (data) => {
 
     console.log(data)
 
-    data = {
+    let user_data = {
         fotoUser: "fotoUser",
         displayName: "displayName",
         title: "Iasi, buget 200E",
@@ -228,6 +228,8 @@ const DescriereCamera = (data) => {
         email: "climente.alin@gmail.com",
         foto: "https://firebasestorage.googleapis.com/v0/b/cameredeinchiriat-b7885.appspot.com/o/listingImage%2Fyb0MWcFWAravpyg3oAT7%2F1.jpg?alt=media&token=b8bacaa2-98ac-4f88-8b02-78f284603ff4"
     }
+
+    data = {... user_data}
 
     return {
         
@@ -246,7 +248,17 @@ const DescriereCamera = (data) => {
                     m("span", data.title),
                     m("span", data.telefon),
                     m("span", data.email)
-                ])
+                ]),
+
+                m("button.btn", {type:"button", onclick:() => {
+
+                    document.querySelector("form").classList.remove("none")
+                    document.querySelector("section").classList.remove("none")
+                    document.querySelector("#show-more").classList.remove("none")
+                    document.querySelector("#descriere-anunt").classList.add("none")
+                    window.scrollTo({ top: 70, behavior: 'smooth' })
+
+                }}, "Inapoi la anunturi")
             ]
         }
     }
@@ -255,14 +267,15 @@ const DescriereCamera = (data) => {
 
 
 function show_details(data){
-    m.mount(document.querySelector("#descriere-anunt"), DescriereCamera)
 
-    document.querySelector("form").style.display = "none"
-    document.querySelector("section").style.display = "none"
-    document.querySelector("#show-more").style.display = "none"
-    window.scrollTo({ top: 4, behavior: 'smooth' })
-    
-    console.log(data)
+    m.mount(document.querySelector("#descriere-anunt"), DescriereCamera(data))
+
+    document.querySelector("#descriere-anunt").classList.remove("none")
+    document.querySelector("form").classList.add("none")
+    document.querySelector("section").classList.add("none")
+    document.querySelector("#show-more").classList.add("none")
+    window.scrollTo({ top: 70, behavior: 'smooth' })
+ 
 }
 
 
@@ -323,7 +336,7 @@ const Listings =  {
         return [m(FormAnunturi, {get_listings:Listings.get_listings}),
                 m(Anunturi, {listings: Listings.listings}),
                 m("button.btn#show-more", {type:"button", onclick:Listings.get_listings}, "Arata mai multe"),
-                ModalImage.view(),
+                m(ModalImage),
                 m("#descriere-anunt")
             ]
         }
