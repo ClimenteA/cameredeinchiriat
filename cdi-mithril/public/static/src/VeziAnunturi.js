@@ -43,7 +43,7 @@ function parse_ref_data(ref_data){
 }
 
 
-const pgitems=2
+const pgitems=10
 
 function build_query(ref, localitate, buget, last_ref){
 
@@ -63,49 +63,57 @@ function build_query(ref, localitate, buget, last_ref){
         ref = ref.limit(pgitems)
     }
     else {
-        ref = ref.orderBy(firebase.firestore.FieldPath.documentId())
-                 .startAfter(last_ref)
-                 .limit(pgitems)
+        try {
+            ref = ref.orderBy(firebase.firestore.FieldPath.documentId())
+                .startAfter(last_ref)
+                .limit(pgitems)    
+        } catch (error) {
+            ref = ref.orderBy("pret")
+                    .startAfter(last_ref)
+                    .limit(pgitems)   
+        }   
     }
 
     return ref
 }
 
 
-async function get_data(form_el=null){
+async function get_data(form_data){
     
-    let form_data
-    if (form_el) {
-        form_data = Object.fromEntries(new FormData(form_el))
+    let localitate
+    let buget
+    let optiune
 
-        if (Object.keys(form_data).length === 0) {
-            form_data = {localitate:null, buget:null, optiune:"camera"}
-        }
+    try {
+        // form_data = Object.fromEntries(new FormData(form_el))
+        localitate = clean_str(form_data.localitate)
+        buget = Number(clean_str(form_data.buget))
+        optiune = form_data.optiune   
+    } catch (error) {
+        //form_el invalid
     }
 
     console.log(form_data)
 
-    let localitate = clean_str(form_data.localitate)
-    let buget = Number(clean_str(form_data.buget))
-    // let optiune = form_data.optiune
-    
     let last_ref = get_json("last_ref")
     let ref = firebase.firestore().collection("listing")
     ref = build_query(ref, localitate, buget, last_ref)
 
     // Parse data
-
     let ref_data = await ref.get()
     
     try {
         last_ref = ref_data.docs[ref_data.docs.length-1].id
         save_json("last_ref", last_ref)
     } catch (error) {
-        toast("Nu mai sunt anunturi!", false, 5000)
+        toast("Nu sunt anunturi de aratat!", false, 5000)
+        clear_json("last_ref")
     }
     
     let anunturi = parse_ref_data(ref_data)
-    
+
+    console.log("anunturi ", anunturi)
+
     return anunturi
 }
 
@@ -115,9 +123,8 @@ const FormAnunturi = {
         return m("form", {onsubmit:event => {
             event.preventDefault()
             freeze_form(event.target)
-            vnode.attrs.get_listings(event.target) 
+            vnode.attrs.get_listings(event) 
             unfreeze_form(event.target)
-            // m.redraw()
         }}, [
             m(".input", [
                 m("label", {for:"localitate"}, "Localitate"),
@@ -143,12 +150,134 @@ const FormAnunturi = {
 }
 
 
+function close_modal(){
+    document.querySelector(".modal").style.display = "none"
+    document.body.style.overflow = "auto"
+}
+
+
+const ModalImage = {
+    view: () => {
+        return m(".modal", {onclick:close_modal}, [
+            m("img.close", {src:"./static/svg/close.svg", onclick:close_modal}),
+            m("img.modal-content"),
+            m(".caption")
+        ])
+    }
+}
+
+
+function fullscreen_image(event){
+
+    let modal = document.querySelector(".modal")
+    let modalImg = document.querySelector("img.modal-content")
+    let captionText = document.querySelector(".caption")
+
+    modal.style.display = "block"
+    modalImg.src = event.target.src
+    captionText.innerHTML = event.target.alt
+
+    document.body.style.overflow = "hidden"
+
+}
+
+
+
+// <main class="center">
+    
+
+//     <img class="responsive-img" src="./static/1.jpg" alt="Foto camera">
+
+//     <div class="descriere">
+//         <h6>Iasi, 100Euro</h6>
+//         <span>
+//             Avem o camera libera intr-un apartament 
+//             cu 3 camere, zona este linistita, magazin 
+//             aproape, cautam o persoana care sa stea
+//             pe o perioada de minim un an.
+//             Pentru alte detalii ma puteti contacta
+//             raspun la telefon dupa ora 6. 
+//         </span>
+//     </div>
+
+
+//     <div class="user dark-purple">
+
+//         <img src="./static/ca.jpg" alt="User image">
+//         <h6>Climente Alin</h6>
+
+//         <span>Iasi, buget 200E</span>
+//         <span>0724242424</span>
+//         <span>climente.alin@gmail.com</span>
+
+//     </div>
+
+
+// </main>
+
+
+const DescriereCamera = (data) => {
+
+    console.log(data)
+
+    data = {
+        fotoUser: "fotoUser",
+        displayName: "displayName",
+        title: "Iasi, buget 200E",
+        telefon: "0724242424",
+        email: "climente.alin@gmail.com",
+        foto: "https://firebasestorage.googleapis.com/v0/b/cameredeinchiriat-b7885.appspot.com/o/listingImage%2Fyb0MWcFWAravpyg3oAT7%2F1.jpg?alt=media&token=b8bacaa2-98ac-4f88-8b02-78f284603ff4"
+    }
+
+    return {
+        
+        view: _ => {
+
+            return [
+                m("img.responsive-img", {src:data.foto}),
+                m(".descriere", [
+                    m("h6", data.title),
+                    m("span", data.descriere),
+                ]),
+
+                m(".user.dark-purple", [
+                    m("img", {src:data.fotoUser}),
+                    m("h6", data.displayName),
+                    m("span", data.title),
+                    m("span", data.telefon),
+                    m("span", data.email)
+                ])
+            ]
+        }
+    }
+}
+
+
+
+function show_details(data){
+    m.mount(document.querySelector("#descriere-anunt"), DescriereCamera)
+
+    document.querySelector("form").style.display = "none"
+    document.querySelector("section").style.display = "none"
+    document.querySelector("#show-more").style.display = "none"
+    window.scrollTo({ top: 4, behavior: 'smooth' })
+    
+    console.log(data)
+}
+
+
+
 const Camera = {
     view: vnode => {
+
+        let title = vnode.attrs.camera.localitate + ", " + vnode.attrs.camera.pret + " Euro"
+
         return m(".anunt", {id:vnode.attrs.id}, [
-            m("img.foto-camera", {src:vnode.attrs.camera.foto}),
-            m("span.title", 
-            vnode.attrs.camera.localitate + ", " + vnode.attrs.camera.pret + " Euro")
+            m("img.foto-camera", {src:vnode.attrs.camera.foto, 
+                                alt:title,
+                                onclick: event => fullscreen_image(event)}
+                                ),
+            m("span.title", {onclick: _ => show_details(vnode.attrs) }, title)
         ])
     }
 }
@@ -165,15 +294,26 @@ const Anunturi = {
 }
 
 
-
 const Listings =  {
     listings: [],
-    get_listings: async (form_el=null) => {
-            // get_data returns n items each time is called
-            // it's a list like [{some:"data"}, {other:"data"}]
-            let objectlist = await get_data(form_el)   
+    get_listings: async (form_el) => {
+        
+            if (form_el !== undefined) {
+                console.log(form_el.target.type)
+                if (form_el.target.type !== "button") {
+                    Listings.listings = [] 
+                }
+            }
+            
+            let form_data = {localitate:document.getElementById("localitate").value, 
+                            buget:document.getElementById("buget").value, 
+                            optiune:document.getElementById("optiune").value}
+            
+            let objectlist = await get_data(form_data)   
             Listings.listings = Listings.listings.concat(objectlist)
+        
             m.redraw()
+
         },
     oncreate: () => {
             prep()
@@ -182,7 +322,9 @@ const Listings =  {
     view: vnode => {
         return [m(FormAnunturi, {get_listings:Listings.get_listings}),
                 m(Anunturi, {listings: Listings.listings}),
-                m("button.btn", {onclick:Listings.get_listings}, "Arata mai multe")
+                m("button.btn#show-more", {type:"button", onclick:Listings.get_listings}, "Arata mai multe"),
+                ModalImage.view(),
+                m("#descriere-anunt")
             ]
         }
 }

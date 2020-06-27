@@ -133,7 +133,11 @@ function clean_str(str) {
 
 
 
-
+function showimage(img_link) {
+    // Onclick of button the background image of body will be test here. 
+    // Give the image path in url
+    document.querySelector("body").style.backgroundImage = `url(${img_link})` 
+}
 
 
 export {
