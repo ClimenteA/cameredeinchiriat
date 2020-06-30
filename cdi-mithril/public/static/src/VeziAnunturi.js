@@ -107,6 +107,7 @@ async function get_data(form_data){
         save_json("last_ref", last_ref)
     } catch (error) {
         toast("Nu sunt anunturi de aratat!", false, 5000)
+        document.getElementById("show-more").classList.add("hide") 
         clear_json("last_ref")
     }
     
@@ -182,43 +183,9 @@ function fullscreen_image(event){
 }
 
 
-
-// <main class="center">
-    
-
-//     <img class="responsive-img" src="./static/1.jpg" alt="Foto camera">
-
-//     <div class="descriere">
-//         <h6>Iasi, 100Euro</h6>
-//         <span>
-//             Avem o camera libera intr-un apartament 
-//             cu 3 camere, zona este linistita, magazin 
-//             aproape, cautam o persoana care sa stea
-//             pe o perioada de minim un an.
-//             Pentru alte detalii ma puteti contacta
-//             raspun la telefon dupa ora 6. 
-//         </span>
-//     </div>
-
-
-//     <div class="user dark-purple">
-
-//         <img src="./static/ca.jpg" alt="User image">
-//         <h6>Climente Alin</h6>
-
-//         <span>Iasi, buget 200E</span>
-//         <span>0724242424</span>
-//         <span>climente.alin@gmail.com</span>
-
-//     </div>
-
-
-// </main>
-
-
 const DescriereCamera = (data) => {
 
-    console.log(data)
+    console.log(data.camera.utilizator)
 
     let user_data = {
         fotoUser: "fotoUser",
@@ -230,6 +197,8 @@ const DescriereCamera = (data) => {
     }
 
     data = {... user_data}
+
+    // console.log(data)
 
     return {
         
@@ -310,7 +279,9 @@ const Anunturi = {
 const Listings =  {
     listings: [],
     get_listings: async (form_el) => {
-        
+
+            document.getElementById("show-more").classList.remove("hide")
+            
             if (form_el !== undefined) {
                 console.log(form_el.target.type)
                 if (form_el.target.type !== "button") {

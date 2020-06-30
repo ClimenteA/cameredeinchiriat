@@ -38,18 +38,18 @@ async function adauga_camera(event){
         let path = `/listingImage/${docRef.id}/${foto.name}`
 
         let storageRef = await firebase.storage().ref()
-        let snapshot = await storageRef.child(path).put(foto)
-        let fotourl = await snapshot.ref.getDownloadURL()
-        let uid = await firebase.auth().currentUser.uid
-        let date = await firebase.firestore.FieldValue.serverTimestamp()
+        let snapshot   = await storageRef.child(path).put(foto)
+        let fotourl    = await snapshot.ref.getDownloadURL()
+        let email      = await firebase.auth().currentUser.email
+        let date       = await firebase.firestore.FieldValue.serverTimestamp()
 
-        let camera_info = {
+        await firebase.firestore().collection("listing")
+        .doc(docRef.id)
+        .update({
             foto: fotourl,
-            utilizator: uid,
+            utilizator: email,
             data: date
-        }
- 
-        await firebase.firestore().collection("listing").doc(docRef.id).update(camera_info)
+        })
 
         unfreeze_form(event.target)
         

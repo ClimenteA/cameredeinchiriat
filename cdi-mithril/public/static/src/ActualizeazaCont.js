@@ -40,19 +40,40 @@ async function actualizeaza_cont(event){
         freeze_form(event.target)
 
         let storageRef = await firebase.storage().ref()
-        let path = `/userImage/${firebase.auth().currentUser.uid}/${form_data.foto.name}`
+        let path = `/userImage/${firebase.auth().currentUser.email}/${form_data.foto.name}`
         let snapshot = await storageRef.child(path).put(form_data.foto)
         let fotourl = await snapshot.ref.getDownloadURL()
 
-        let user_data = {
-            displayName: form_data.nume +"|"+ form_data.localitate +"|"+ form_data.buget +"|"+ form_data.telefon,
-            photoURL: fotourl
-        }
+        let db = firebase.firestore()
+     
+        firebase.auth().onAuthStateChanged(async user => {
+            
+            if (user) {
 
-        await firebase.auth().currentUser.updateProfile(user_data)
-        
-        toast("Datele au fost actualizate!")
-        
+                let qsnap = await db.collection("user").where("email", "==", user.email).get()
+
+                try {
+                    qsnap.forEach(async doc => {
+                        await db.collection("user").doc(doc.id)
+                        .update({
+                            nume: form_data.nume,
+                            buget: form_data.buget,
+                            localitate: form_data.localitate,
+                            telefon: form_data.telefon,
+                            foto: fotourl
+                        })
+                    })
+
+                    toast("Datele au fost actualizate!")
+                    
+                } catch (error) {
+                    toast("Nu am putut actualiza datele!", false, 5000)
+                }
+                
+            }
+        })
+                
+    
         m.route.set("/cont-utilizator")
 
     } catch (error) {

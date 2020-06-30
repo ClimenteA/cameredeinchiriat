@@ -3,7 +3,11 @@ import { set, get, clear } from "../idb.js"
 
 // HACK to trigger firebase auth
 async function callFirebaseAuth(){
-    await firebase.auth().currentUser
+    try {
+        await firebase.auth().currentUser    
+    } catch (error) {
+        
+    }
 }
 
 callFirebaseAuth()

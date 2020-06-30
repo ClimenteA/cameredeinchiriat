@@ -3,8 +3,14 @@
 // Minify bundle with rollup.js
 // https://rollupjs.org/guide/en/
 // rollup App.js --file bundle.js --format iife
-
+// rollup App.js --file bundle.js --compact --format iife
 // https://www.npmjs.com/package/idb-keyval
+
+
+
+// Update a doc by field value
+// https://stackoverflow.com/questions/49682327/how-to-update-a-single-firebase-firestore-document/49682615
+
 
 
 import {

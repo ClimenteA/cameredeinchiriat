@@ -36,12 +36,19 @@ async function creeaza_cont(event){
         
         await firebase.auth().createUserWithEmailAndPassword(email, password)
         await firebase.auth().signInWithEmailAndPassword(email, password)
-        await firebase.auth().currentUser.updateProfile({
-            displayName: name_from_email(email) + '|' + '100',
+        await firebase.auth().currentUser.sendEmailVerification()
+
+        toast("Verifica emailul pentru a valida contul!", true, 6000)
+
+        await firebase.firestore().collection('user').add({
+            nume: name_from_email(email),
+            buget: 100,
+            localitate: "Oriunde",
+            telefon: "",
+            email: email,
+            foto: ""
         })
 
-        await firebase.auth().currentUser.sendEmailVerification()
-        toast("Verifica emailul pentru a valida contul!", true, 6000)
         unfreeze_form(event.target)
         m.route.set("/cont-utilizator")
         
