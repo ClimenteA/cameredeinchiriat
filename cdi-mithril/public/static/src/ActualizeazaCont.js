@@ -73,7 +73,6 @@ async function actualizeaza_cont(event){
             }
         })
                 
-    
         m.route.set("/cont-utilizator")
 
     } catch (error) {

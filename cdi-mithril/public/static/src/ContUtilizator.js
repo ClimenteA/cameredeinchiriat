@@ -25,17 +25,23 @@ function parse_query_data(query_data){
 const CardUtilizator = {
 
     user_data: null,
+    user_email: null,
 
     get_user_data: async _ => {
 
         let query = firebase.firestore().collection("user")
 
-        firebase.auth().onAuthStateChanged(user => {
-            if (user) {
-                query.where("email", "==", user.email)
-            }
-        })
-
+        if (CardUtilizator.user_email) {
+            query.where("email", "==", CardUtilizator.user_email)
+        }
+        else {
+            firebase.auth().onAuthStateChanged(user => {
+                if (user) {
+                    query.where("email", "==", user.email)
+                }
+            })
+        }
+        
         let query_data = await query.get()  
         CardUtilizator.user_data = parse_query_data(query_data)
         console.log(CardUtilizator.user_data)
@@ -49,15 +55,17 @@ const CardUtilizator = {
 
     view: () => {
 
-        return m("section.user", CardUtilizator.user_data ? [
-            m("img", {src:CardUtilizator.user_data.foto}),
-            m("h6", CardUtilizator.user_data.nume),
-            m("span", CardUtilizator.user_data.localitate + ", " + "buget " + CardUtilizator.user_data.buget + " Euro"),
-            m("span", CardUtilizator.user_data.telefon),
-            m("span", CardUtilizator.user_data.email),
-            m("a", {href:"#!/actualizeaza-cont", 
-                    class:"btn moderate-purple"}, "Actualizeaza contul")
-        ] : m("h5", "...") )
+        const user_card = data => [
+                m("img", {src:data.foto}),
+                m("h6", data.nume),
+                m("span", data.localitate + ", " + "buget " + data.buget + " Euro"),
+                m("span", data.telefon),
+                m("span", data.email)
+            ]
+
+        return m("section.user", 
+        CardUtilizator.user_data ? 
+        user_card(CardUtilizator.user_data) : m("h5", "...") )
     }
 
     }
@@ -69,9 +77,9 @@ const AnunturiPostate = {
     anunturi: [],
 
     oninit: vnode => {
-        AnunturiPostate.anunturi = [ {title:"Iasi, buget 120Euro", 
+        AnunturiPostate.anunturi = [ {title:"TEST Iasi, buget 120Euro", 
                                     id_camera:"123212"},
-                                    {title:"Iasi, buget 50Euro", 
+                                    {title:"TEST Iasi, buget 50Euro", 
                                     id_camera:"124444"}
                                     ]
     },
@@ -92,10 +100,14 @@ const ContUtilizator = {
     view: () => {
         return m("div.center.user-layout", [
             m(CardUtilizator),
-            m(AnunturiPostate)
+            m(AnunturiPostate),
+            m("a", { href:"#!/actualizeaza-cont", class:"btn moderate-purple"}, "Actualizeaza contul")
         ])
     }
 }
 
 
-export default ContUtilizator
+export {
+    CardUtilizator,
+    ContUtilizator
+}

@@ -566,7 +566,7 @@ margin: 0.7666666667rem 0 0.46rem 0;
 }
 
 a.btn {
-    padding: 16px 0px 16px 0px;
+    padding: 16px 14px 16px 14px;
 }
 
 .btn {
@@ -982,4 +982,5 @@ cursor: pointer;
     justify-items: center;
     grid-auto-rows: max-content;
     grid-gap: 2rem;
+    margin-top: 2rem;
 }

@@ -10,6 +10,22 @@ import {
     clean_str
 } from "./Utils.js"
 
+import {CardUtilizator} from "./ContUtilizator.js"
+
+
+function disable_show_more_btn(){
+    let show_more = document.getElementById("show-more")
+    show_more.style.cursor = "default"
+    show_more.disabled = true    
+}
+
+
+function enable_show_more_btn(){
+    let show_more = document.getElementById("show-more")
+    show_more.style.cursor = "pointer"
+    show_more.disabled = false    
+}
+
 
 function toggle_cauta(){
     try {
@@ -17,6 +33,8 @@ function toggle_cauta(){
         let btn = document.getElementById("cauta")
         btn.innerText = "Cauta " + optiune.value
         document.querySelector("title").innerText = "Cauta " + optiune.value
+        enable_show_more_btn()
+
     } catch (error) {
         // console.error(error)   
     }
@@ -107,7 +125,7 @@ async function get_data(form_data){
         save_json("last_ref", last_ref)
     } catch (error) {
         toast("Nu sunt anunturi de aratat!", false, 5000)
-        document.getElementById("show-more").classList.add("hide") 
+        disable_show_more_btn()
         clear_json("last_ref")
     }
     
@@ -124,7 +142,8 @@ const FormAnunturi = {
         return m("form", {onsubmit:event => {
             event.preventDefault()
             freeze_form(event.target)
-            vnode.attrs.get_listings(event) 
+            vnode.attrs.get_listings(event)
+            enable_show_more_btn() 
             unfreeze_form(event.target)
         }}, [
             m(".input", [
@@ -185,21 +204,11 @@ function fullscreen_image(event){
 
 const DescriereCamera = (data) => {
 
-    console.log(data.camera.utilizator)
-
-    let user_data = {
-        fotoUser: "fotoUser",
-        displayName: "displayName",
-        title: "Iasi, buget 200E",
-        telefon: "0724242424",
-        email: "climente.alin@gmail.com",
-        foto: "https://firebasestorage.googleapis.com/v0/b/cameredeinchiriat-b7885.appspot.com/o/listingImage%2Fyb0MWcFWAravpyg3oAT7%2F1.jpg?alt=media&token=b8bacaa2-98ac-4f88-8b02-78f284603ff4"
-    }
-
-    data = {... user_data}
-
-    // console.log(data)
-
+    data = data.camera
+    CardUtilizator.user_email = data.utilizator
+    
+    console.log("DescriereCamera ", data)
+    
     return {
         
         view: _ => {
@@ -207,26 +216,19 @@ const DescriereCamera = (data) => {
             return [
                 m("img.responsive-img", {src:data.foto}),
                 m(".descriere", [
-                    m("h6", data.title),
+                    m("h6", data.localitate + ", " + data.pret + " Euro"),
                     m("span", data.descriere),
                 ]),
 
-                m(".user.dark-purple", [
-                    m("img", {src:data.fotoUser}),
-                    m("h6", data.displayName),
-                    m("span", data.title),
-                    m("span", data.telefon),
-                    m("span", data.email)
-                ]),
+                m(CardUtilizator),
 
                 m("button.btn", {type:"button", onclick:() => {
-
                     document.querySelector("form").classList.remove("none")
                     document.querySelector("section").classList.remove("none")
                     document.querySelector("#show-more").classList.remove("none")
                     document.querySelector("#descriere-anunt").classList.add("none")
+                    document.querySelector("main").classList.add("center")
                     window.scrollTo({ top: 70, behavior: 'smooth' })
-
                 }}, "Inapoi la anunturi")
             ]
         }
