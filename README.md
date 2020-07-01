@@ -1,5 +1,5 @@
-# cameredeinchiriat
+# cameredeinchiriat (demo)
 Firebase test
 
 
-![alt text](http://url/to/img.png)
+![camere de inchiriat](https://github.com/ClimenteA/cameredeinchiriat/blob/master/cdi.gif)
