@@ -50,7 +50,10 @@ const Footer = {
             m("a", {href:"#!/contact"}, "Contact"),
         ])
     }
-};// HACK to trigger firebase auth
+};// import { set, get, clear } from "../idb.js"
+ 
+
+// HACK to trigger firebase auth
 async function callFirebaseAuth(){
     try {
         await firebase.auth().currentUser;    
@@ -248,16 +251,16 @@ async function adauga_camera(event){
         let storageRef = await firebase.storage().ref();
         let snapshot   = await storageRef.child(path).put(foto);
         let fotourl    = await snapshot.ref.getDownloadURL();
-        let uid        = await firebase.auth().currentUser.uid;
+        let email      = await firebase.auth().currentUser.email;
         let date       = await firebase.firestore.FieldValue.serverTimestamp();
 
-        let camera_info = {
+        await firebase.firestore().collection("listing")
+        .doc(docRef.id)
+        .update({
             foto: fotourl,
-            utilizator: uid,
+            utilizator: email,
             data: date
-        };
- 
-        await firebase.firestore().collection("listing").doc(docRef.id).update(camera_info);
+        });
 
         unfreeze_form(event.target);
         
@@ -399,19 +402,137 @@ const IntraInCont = {
             ])
         ])
     }
-};function toggle_cauta(){
+};function prep$3(){
+    document.querySelector("main").removeAttribute("class");
+    document.body.className = "light-green blocuri";
+    document.querySelector("title").innerText = "Cont utilizator";
+    close_menu();
+}
+
+
+function parse_query_data(query_data){   
+
+    let data = [];
+    query_data.forEach(res => {
+        let jdata = {id:res.id, data:res.data()};
+        data.push(jdata);
+    });
+
+    return data[0].data
+}
+
+
+const CardUtilizator = {
+
+    user_data: null,
+    user_email: null,
+
+    get_user_data: async _ => {
+
+        let query = firebase.firestore().collection("user");
+
+        if (CardUtilizator.user_email) {
+            query.where("email", "==", CardUtilizator.user_email);
+        }
+        else {
+            firebase.auth().onAuthStateChanged(user => {
+                if (user) {
+                    query.where("email", "==", user.email);
+                }
+            });
+        }
+        
+        let query_data = await query.get();  
+        CardUtilizator.user_data = parse_query_data(query_data);
+        console.log(CardUtilizator.user_data);
+        m.redraw();
+    },
+
+    oninit: () => {
+        prep$3();
+        CardUtilizator.get_user_data();
+    },
+
+    view: () => {
+
+        const user_card = data => [
+                m("img", {src:data.foto}),
+                m("h6", data.nume),
+                m("span", data.localitate + ", " + "buget " + data.buget + " Euro"),
+                m("span", data.telefon),
+                m("span", data.email)
+            ];
+
+        return m("section.user", 
+        CardUtilizator.user_data ? 
+        user_card(CardUtilizator.user_data) : m("h5", "...") )
+    }
+
+    };
+
+    
+
+
+const AnunturiPostate = {
+    anunturi: [],
+
+    oninit: vnode => {
+        AnunturiPostate.anunturi = [ {title:"TEST Iasi, buget 120Euro", 
+                                    id_camera:"123212"},
+                                    {title:"TEST Iasi, buget 50Euro", 
+                                    id_camera:"124444"}
+                                    ];
+    },
+    view: () => {
+        return m("section.camere-postate", [
+            m("h6", "Camere postate"),
+            AnunturiPostate.anunturi ? m("ul", AnunturiPostate.anunturi.map(anunt => {
+                return m("li", [
+                    m("a", {href:`#!/detalii-camera/${anunt.id_camera}`}, anunt.title)
+                ]) 
+            })) : m("h5", "...")
+        ])
+    }
+};
+
+
+const ContUtilizator = {
+    view: () => {
+        return m("div.center.user-layout", [
+            m(CardUtilizator),
+            m(AnunturiPostate),
+            m("a", { href:"#!/actualizeaza-cont", class:"btn moderate-purple"}, "Actualizeaza contul")
+        ])
+    }
+};function disable_show_more_btn(){
+    let show_more = document.getElementById("show-more");
+    show_more.style.cursor = "default";
+    show_more.disabled = true;    
+}
+
+
+function enable_show_more_btn(){
+    let show_more = document.getElementById("show-more");
+    show_more.style.cursor = "pointer";
+    show_more.disabled = false;    
+}
+
+
+function toggle_cauta(){
     try {
         let optiune = document.getElementById("optiune");
         let btn = document.getElementById("cauta");
         btn.innerText = "Cauta " + optiune.value;
         document.querySelector("title").innerText = "Cauta " + optiune.value;
+        enable_show_more_btn();
+
     } catch (error) {
         // console.error(error)   
     }
 }
 
 
-function prep$3(){
+function prep$4(){
     document.body.className = "light-green blocuri";
     document.querySelector("main").className = "center";
     document.querySelector("title").innerText = "Cauta camera";
@@ -483,22 +604,44 @@ async function get_data(form_data){
 
     console.log(form_data);
 
+    let ref;
     let last_ref = get_json("last_ref");
-    let ref = firebase.firestore().collection("listing");
-    ref = build_query(ref, localitate, buget, last_ref);
-
-    // Parse data
-    let ref_data = await ref.get();
-    
-    try {
-        last_ref = ref_data.docs[ref_data.docs.length-1].id;
-        save_json("last_ref", last_ref);
-    } catch (error) {
-        toast("Nu sunt anunturi de aratat!", false, 5000);
-        clear_json("last_ref");
+    let db = firebase.firestore();
+    if (optiune === "camera") {
+        ref = build_query(db.collection("listing"), localitate, buget, last_ref);
+    } 
+    else if (optiune === "coleg") {
+        ref = build_query(db.collection("user"), localitate, buget, last_ref);
     }
     
-    let anunturi = parse_ref_data(ref_data);
+    // Parse data
+    let ref_data = await ref.get();
+
+    let anunturi;
+
+    try {
+        last_ref = ref_data.docs[ref_data.docs.length-1].id;
+        
+        let prev_last_ref = get_json("last_ref"); 
+        
+        // console.log(prev_last_ref, last_ref)
+
+        if (prev_last_ref === last_ref) {
+            clear_json("last_ref");
+            toast("Nu sunt anunturi de aratat!", false, 5000);
+            disable_show_more_btn();
+            anunturi = [];
+        }
+        else {
+            save_json("last_ref", last_ref);
+            anunturi = parse_ref_data(ref_data);
+        }
+
+    } catch (error) {
+        toast("Nu sunt anunturi de aratat!", false, 5000);
+        disable_show_more_btn();
+        clear_json("last_ref");
+    }
 
     console.log("anunturi ", anunturi);
 
@@ -511,7 +654,8 @@ const FormAnunturi = {
         return m("form", {onsubmit:event => {
             event.preventDefault();
             freeze_form(event.target);
-            vnode.attrs.get_listings(event); 
+            vnode.attrs.get_listings(event);
+            enable_show_more_btn(); 
             unfreeze_form(event.target);
         }}, [
             m(".input", [
@@ -570,57 +714,13 @@ function fullscreen_image(event){
 }
 
 
-
-// <main class="center">
-    
-
-//     <img class="responsive-img" src="./static/1.jpg" alt="Foto camera">
-
-//     <div class="descriere">
-//         <h6>Iasi, 100Euro</h6>
-//         <span>
-//             Avem o camera libera intr-un apartament 
-//             cu 3 camere, zona este linistita, magazin 
-//             aproape, cautam o persoana care sa stea
-//             pe o perioada de minim un an.
-//             Pentru alte detalii ma puteti contacta
-//             raspun la telefon dupa ora 6. 
-//         </span>
-//     </div>
-
-
-//     <div class="user dark-purple">
-
-//         <img src="./static/ca.jpg" alt="User image">
-//         <h6>Climente Alin</h6>
-
-//         <span>Iasi, buget 200E</span>
-//         <span>0724242424</span>
-//         <span>climente.alin@gmail.com</span>
-
-//     </div>
-
-
-// </main>
-
-
 const DescriereCamera = (data) => {
 
-    console.log(data.camera.utilizator);
-
-    let user_data = {
-        fotoUser: "fotoUser",
-        displayName: "displayName",
-        title: "Iasi, buget 200E",
-        telefon: "0724242424",
-        email: "climente.alin@gmail.com",
-        foto: "https://firebasestorage.googleapis.com/v0/b/cameredeinchiriat-b7885.appspot.com/o/listingImage%2Fyb0MWcFWAravpyg3oAT7%2F1.jpg?alt=media&token=b8bacaa2-98ac-4f88-8b02-78f284603ff4"
-    };
-
-    data = {... user_data};
-
-    // console.log(data)
-
+    data = data.camera;
+    CardUtilizator.user_email = data.utilizator;
+    
+    console.log("DescriereCamera ", data);
+    
     return {
         
         view: _ => {
@@ -628,26 +728,19 @@ const DescriereCamera = (data) => {
             return [
                 m("img.responsive-img", {src:data.foto}),
                 m(".descriere", [
-                    m("h6", data.title),
+                    m("h5", data.localitate + ", " + data.pret + " Euro"),
                     m("span", data.descriere),
                 ]),
 
-                m(".user.dark-purple", [
-                    m("img", {src:data.fotoUser}),
-                    m("h6", data.displayName),
-                    m("span", data.title),
-                    m("span", data.telefon),
-                    m("span", data.email)
-                ]),
+                m(CardUtilizator),
 
                 m("button.btn", {type:"button", onclick:() => {
-
                     document.querySelector("form").classList.remove("none");
                     document.querySelector("section").classList.remove("none");
                     document.querySelector("#show-more").classList.remove("none");
                     document.querySelector("#descriere-anunt").classList.add("none");
+                    document.querySelector("main").classList.add("center");
                     window.scrollTo({ top: 70, behavior: 'smooth' });
-
                 }}, "Inapoi la anunturi")
             ]
         }
@@ -700,7 +793,9 @@ const Anunturi = {
 const Listings =  {
     listings: [],
     get_listings: async (form_el) => {
-        
+
+            document.getElementById("show-more").classList.remove("hide");
+            
             if (form_el !== undefined) {
                 console.log(form_el.target.type);
                 if (form_el.target.type !== "button") {
@@ -719,10 +814,15 @@ const Listings =  {
 
         },
     oncreate: () => {
-            prep$3();
-            Listings.get_listings();
+            prep$4();
+            if (Listings.listings !== []) {
+                Listings.get_listings();
+            }
         },
-    view: vnode => {
+    onremove: () => {
+        Listings.listings = [];
+    },
+    view: _ => {
         return [m(FormAnunturi, {get_listings:Listings.get_listings}),
                 m(Anunturi, {listings: Listings.listings}),
                 m("button.btn#show-more", {type:"button", onclick:Listings.get_listings}, "Arata mai multe"),
@@ -756,7 +856,10 @@ let VeziAnunturi = Listings;const IesiDinCont = {
     }
 };const TermeniSiConditii = {
     view: () => {
-        return m("h1", "TermeniSiConditii")
+        return [
+            m("h1", "TermeniSiConditii"),
+            m("p", {style:"color:red;background:white;padding:4rem;"}, "Acest website e facut doar in scop demonstrativ. Nu incarcati date sensibile!")
+        ]
     }
 };const RaporteazaProblema = {
     view: () => {
@@ -834,7 +937,7 @@ async function creeaza_cont(event){
 }
 
 
-function prep$4(){
+function prep$5(){
     document.body.className = "light-purple blocuri";
     document.querySelector("main").className = "center";
     document.querySelector("title").innerText = "Creeaza un cont";
@@ -848,7 +951,7 @@ const CreeazaUnCont = {
             return m.route.set("/cont-utilizator")
         }
     },
-    oncreate: prep$4,
+    oncreate: prep$5,
     view: () => {
 
         return m("form", {onsubmit: ev => {creeaza_cont(ev);}}, [
@@ -906,99 +1009,6 @@ const ReseteazaParola = {
                 m("input", {type:"email", name:"email", id:"email", required:"required"})
             ]),
             m("button", {type:"submit", class:"btn dark-green"}, "Reseteaza parola")
-        ])
-    }
-};function prep$5(){
-    document.querySelector("main").removeAttribute("class");
-    document.body.className = "light-green blocuri";
-    document.querySelector("title").innerText = "Cont utilizator";
-    close_menu();
-}
-
-
-function parse_query_data(query_data){   
-
-    let data = [];
-    query_data.forEach(res => {
-        let jdata = {id:res.id, data:res.data()};
-        data.push(jdata);
-    });
-
-    return data[0].data
-}
-
-
-const CardUtilizator = {
-
-    user_data: null,
-
-    get_user_data: async _ => {
-
-        let query = firebase.firestore().collection("user");
-
-        firebase.auth().onAuthStateChanged(user => {
-            if (user) {
-                query.where("email", "==", user.email);
-            }
-        });
-
-        let query_data = await query.get();  
-        CardUtilizator.user_data = parse_query_data(query_data);
-        console.log(CardUtilizator.user_data);
-        m.redraw();
-    },
-
-    oninit: () => {
-        prep$5();
-        CardUtilizator.get_user_data();
-    },
-
-    view: () => {
-
-        return m("section.user", CardUtilizator.user_data ? [
-            m("img", {src:CardUtilizator.user_data.foto}),
-            m("h6", CardUtilizator.user_data.nume),
-            m("span", CardUtilizator.user_data.localitate + ", " + "buget " + CardUtilizator.user_data.buget + " Euro"),
-            m("span", CardUtilizator.user_data.telefon),
-            m("span", CardUtilizator.user_data.email),
-            m("a", {href:"#!/actualizeaza-cont", 
-                    class:"btn moderate-purple"}, "Actualizeaza contul")
-        ] : m("h5", "...") )
-    }
-
-    };
-
-    
-
-
-const AnunturiPostate = {
-    anunturi: [],
-
-    oninit: vnode => {
-        AnunturiPostate.anunturi = [ {title:"Iasi, buget 120Euro", 
-                                    id_camera:"123212"},
-                                    {title:"Iasi, buget 50Euro", 
-                                    id_camera:"124444"}
-                                    ];
-    },
-    view: () => {
-        return m("section.camere-postate", [
-            m("h6", "Camere postate"),
-            AnunturiPostate.anunturi ? m("ul", AnunturiPostate.anunturi.map(anunt => {
-                return m("li", [
-                    m("a", {href:`#!/detalii-camera/${anunt.id_camera}`}, anunt.title)
-                ]) 
-            })) : m("h5", "...")
-        ])
-    }
-};
-
-
-const ContUtilizator = {
-    view: () => {
-        return m("div.center.user-layout", [
-            m(CardUtilizator),
-            m(AnunturiPostate)
         ])
     }
 };function prep$6(){
@@ -1112,19 +1122,39 @@ async function actualizeaza_cont(event){
         freeze_form(event.target);
 
         let storageRef = await firebase.storage().ref();
-        let path = `/userImage/${firebase.auth().currentUser.uid}/${form_data.foto.name}`;
+        let path = `/userImage/${firebase.auth().currentUser.email}/${form_data.foto.name}`;
         let snapshot = await storageRef.child(path).put(form_data.foto);
         let fotourl = await snapshot.ref.getDownloadURL();
 
-        let user_data = {
-            displayName: form_data.nume +"|"+ form_data.localitate +"|"+ form_data.buget +"|"+ form_data.telefon,
-            photoURL: fotourl
-        };
+        let db = firebase.firestore();
+     
+        firebase.auth().onAuthStateChanged(async user => {
+            
+            if (user) {
 
-        await firebase.auth().currentUser.updateProfile(user_data);
-        
-        toast("Datele au fost actualizate!");
-        
+                let qsnap = await db.collection("user").where("email", "==", user.email).get();
+
+                try {
+                    qsnap.forEach(async doc => {
+                        await db.collection("user").doc(doc.id)
+                        .update({
+                            nume: form_data.nume,
+                            buget: form_data.buget,
+                            localitate: form_data.localitate,
+                            telefon: form_data.telefon,
+                            foto: fotourl
+                        });
+                    });
+
+                    toast("Datele au fost actualizate!");
+                    
+                } catch (error) {
+                    toast("Nu am putut actualiza datele!", false, 5000);
+                }
+                
+            }
+        });
+                
         m.route.set("/cont-utilizator");
 
     } catch (error) {
@@ -1193,14 +1223,34 @@ const ActualizeazaCont = {
         {style:"padding:2rem;border-radius:20px;"},
         "Pagina nu a putut fi gasita..")
     }
-};const header = document.querySelector("header"); 
+};// Initialize firebase
+if (typeof firebase === 'undefined') throw new Error('hosting/init-error: Firebase SDK not detected. You must include it before /__/firebase/init.js');
+var firebaseConfig = {
+  "projectId": "cameredeinchiriat-b7885",
+  "appId": "1:841749487216:web:602b8e01ac6561aad4deb5",
+  "databaseURL": "https://cameredeinchiriat-b7885.firebaseio.com",
+  "storageBucket": "cameredeinchiriat-b7885.appspot.com",
+  "locationId": "europe-west6",
+  "apiKey": "AIzaSyA4oEHfBeM_8mmYXDiaao01eIHkdfmuIr0",
+  "authDomain": "cameredeinchiriat-b7885.firebaseapp.com",
+  "messagingSenderId": "841749487216",
+  "measurementId": "G-2961KQZJFR"
+};
+if (firebaseConfig) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+
+
+
+const header = document.querySelector("header"); 
 const main = document.querySelector("main");
 const footer = document.querySelector("footer");
 
 
 // Static components
-m.mount(header, Nav);
-m.mount(footer, Footer);
+m.render(header, m(Nav));
+m.render(footer, m(Footer));
 
 
 // Main contect changed based on route
@@ -1223,7 +1273,6 @@ m.route(main, "/", {
     "/cont-utilizator": ContUtilizator,
     "/actualizeaza-cont": ActualizeazaCont,
     "/detalii-camera/:id_camera": DetaliiCamera, 
-
 
     "/:404...": Error404
 

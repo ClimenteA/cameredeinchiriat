@@ -215,6 +215,7 @@ header + main {
     min-height: calc(100vh - 100px);
 }
 
+
 .footer {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -235,7 +236,6 @@ header + main {
         grid-template-columns: 1fr;
     }
 }
-
 
 
 button, input {
@@ -864,7 +864,7 @@ form {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.descriere > h6 {
+.descriere > h5 {
     font-family: "Fredoka One" 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     text-align: center;
     margin-bottom: 1rem;
@@ -984,3 +984,4 @@ cursor: pointer;
     grid-gap: 2rem;
     margin-top: 2rem;
 }
+

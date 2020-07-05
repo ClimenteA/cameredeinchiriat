@@ -1,4 +1,4 @@
-import { set, get, clear } from "../idb.js"
+// import { set, get, clear } from "../idb.js"
  
 
 // HACK to trigger firebase auth

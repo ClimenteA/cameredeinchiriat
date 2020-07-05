@@ -13,6 +13,7 @@ import {
 import {CardUtilizator} from "./ContUtilizator.js"
 
 
+
 function disable_show_more_btn(){
     let show_more = document.getElementById("show-more")
     show_more.style.cursor = "default"
@@ -113,23 +114,44 @@ async function get_data(form_data){
 
     console.log(form_data)
 
+    let ref
     let last_ref = get_json("last_ref")
-    let ref = firebase.firestore().collection("listing")
-    ref = build_query(ref, localitate, buget, last_ref)
-
+    let db = firebase.firestore()
+    if (optiune === "camera") {
+        ref = build_query(db.collection("listing"), localitate, buget, last_ref)
+    } 
+    else if (optiune === "coleg") {
+        ref = build_query(db.collection("user"), localitate, buget, last_ref)
+    }
+    
     // Parse data
     let ref_data = await ref.get()
-    
+
+    let anunturi
+
     try {
         last_ref = ref_data.docs[ref_data.docs.length-1].id
-        save_json("last_ref", last_ref)
+        
+        let prev_last_ref = get_json("last_ref") 
+        
+        // console.log(prev_last_ref, last_ref)
+
+        if (prev_last_ref === last_ref) {
+            clear_json("last_ref")
+            toast("Nu sunt anunturi de aratat!", false, 5000)
+            disable_show_more_btn()
+            anunturi = []
+        }
+        else {
+            save_json("last_ref", last_ref)
+            anunturi = parse_ref_data(ref_data)
+        }
+
     } catch (error) {
         toast("Nu sunt anunturi de aratat!", false, 5000)
         disable_show_more_btn()
         clear_json("last_ref")
     }
-    
-    let anunturi = parse_ref_data(ref_data)
 
     console.log("anunturi ", anunturi)
 
@@ -216,7 +238,7 @@ const DescriereCamera = (data) => {
             return [
                 m("img.responsive-img", {src:data.foto}),
                 m(".descriere", [
-                    m("h6", data.localitate + ", " + data.pret + " Euro"),
+                    m("h5", data.localitate + ", " + data.pret + " Euro"),
                     m("span", data.descriere),
                 ]),
 
@@ -303,9 +325,14 @@ const Listings =  {
         },
     oncreate: () => {
             prep()
-            Listings.get_listings()
+            if (Listings.listings !== []) {
+                Listings.get_listings()
+            }
         },
-    view: vnode => {
+    onremove: () => {
+        Listings.listings = []
+    },
+    view: _ => {
         return [m(FormAnunturi, {get_listings:Listings.get_listings}),
                 m(Anunturi, {listings: Listings.listings}),
                 m("button.btn#show-more", {type:"button", onclick:Listings.get_listings}, "Arata mai multe"),
