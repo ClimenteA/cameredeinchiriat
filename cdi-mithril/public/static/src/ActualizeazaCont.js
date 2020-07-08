@@ -57,7 +57,7 @@ async function actualizeaza_cont(event){
                         await db.collection("user").doc(doc.id)
                         .update({
                             nume: form_data.nume,
-                            buget: form_data.buget,
+                            buget: Number(form_data.buget.trim()),
                             localitate: form_data.localitate,
                             telefon: form_data.telefon,
                             foto: fotourl
@@ -77,7 +77,8 @@ async function actualizeaza_cont(event){
 
     } catch (error) {
         console.error(error)
-        toast(error.message, false, 8000)
+        toast("Nu am putut realiza operatia!", false, 8000)
+        // toast(error.message, false, 8000)
         unfreeze_form(event.target)
     }
     

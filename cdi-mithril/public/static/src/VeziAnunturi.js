@@ -14,33 +14,22 @@ import {CardUtilizator} from "./ContUtilizator.js"
 
 
 
-function disable_show_more_btn(){
-    let show_more = document.getElementById("show-more")
-    show_more.style.cursor = "default"
-    show_more.disabled = true    
+// Model
+
+let nbr_of_items = 10
+let btn_text = "Ok"
+
+let store = {
+    option: "camera",
+    form_data: {localitate: "", buget: "", optiune: "camera"}, 
+    last_ref: undefined,
+    items: undefined
 }
 
 
-function enable_show_more_btn(){
-    let show_more = document.getElementById("show-more")
-    show_more.style.cursor = "pointer"
-    show_more.disabled = false    
-}
 
 
-function toggle_cauta(){
-    try {
-        let optiune = document.getElementById("optiune")
-        let btn = document.getElementById("cauta")
-        btn.innerText = "Cauta " + optiune.value
-        document.querySelector("title").innerText = "Cauta " + optiune.value
-        enable_show_more_btn()
-
-    } catch (error) {
-        // console.error(error)   
-    }
-}
-
+// Controller
 
 function prep(){
     document.body.className = "light-green blocuri"
@@ -50,124 +39,150 @@ function prep(){
 }
 
 
-function parse_ref_data(ref_data){   
+function disable_btn(id){
+    let btn = document.getElementById(id)
+    btn_text = btn.innerText
+    btn.innerText = "..."
+    btn.style.cursor = "default"
+    btn.disabled = true    
+}
 
-    let anunturi = []
-    ref_data.forEach(res => {
-        let jdata = {id:res.id, camera:res.data()}
-        anunturi.push(jdata)
-    })
+function enable_btn(id){
+    let btn = document.getElementById(id)
+    btn.innerText = btn_text
+    btn.style.cursor = "pointer"
+    btn.disabled = false    
+}
 
-    return anunturi
+function process_option(){
+    try {
+        let optiune = document.getElementById("optiune")
+        let btn = document.getElementById("cauta")
+        btn.innerText = "Cauta " + optiune.value
+        document.querySelector("title").innerText = "Cauta " + optiune.value
+        
+        store.option = optiune.value
+        store.last_ref = undefined
+        store.items = undefined
+
+        console.log("option changed: ", store)
+        
+        enable_show_more_btn()
+
+    } catch (error) {
+        // console.error(error)   
+    }
 }
 
 
-const pgitems=10
+function store_form_data(event){
+    let form = new FormData(event.target) 
+    let form_data = Object.fromEntries(form)
+    store.form_data = form_data
+}
 
-function build_query(ref, localitate, buget, last_ref){
+function get_collection(){
 
+    let ref = firebase.firestore()
+    
+    if (store.form_data.optiune === "camera") {
+        ref = ref.collection("listing")
+    } else if (store.form_data.optiune === "coleg") {
+        ref = ref.collection("user")
+    }
+    return ref
+}
+
+
+function build_query(){
+    
+    let ref = get_collection()
+
+    let localitate = store.form_data.localitate
+    let buget      = store.form_data.buget
+    
     // Build query
     if (localitate && buget){   
-        ref = ref.where("localitate", "in", [localitate]).where("pret", "<=", buget)         
+        ref = ref.where("localitate", "in", [localitate]).where("buget", "<=", buget)         
     }
     else if (localitate){
         ref = ref.where("localitate", "in", [localitate])                  
     }
     else if (buget){
-        ref = ref.where("pret", "<=", buget)
+        ref = ref.where("buget", "<=", buget)
     }
 
-    // Check last ref 
-    if (last_ref === null) {
-        ref = ref.limit(pgitems)
-    }
+    // Add limit of items
+    if (store.last_ref === undefined) {
+        ref = ref.limit(nbr_of_items)
+    } 
     else {
         try {
             ref = ref.orderBy(firebase.firestore.FieldPath.documentId())
-                .startAfter(last_ref)
-                .limit(pgitems)    
+                .startAfter(store.last_ref)
+                .limit(nbr_of_items)    
         } catch (error) {
-            ref = ref.orderBy("pret")
+            ref = ref.orderBy("buget")
                     .startAfter(last_ref)
-                    .limit(pgitems)   
-        }   
+                    .limit(nbr_of_items)   
+        }
     }
 
     return ref
+
 }
 
 
-async function get_data(form_data){
-    
-    let localitate
-    let buget
-    let optiune
+function parse_ref_data(ref_data){   
 
-    try {
-        // form_data = Object.fromEntries(new FormData(form_el))
-        localitate = clean_str(form_data.localitate)
-        buget = Number(clean_str(form_data.buget))
-        optiune = form_data.optiune   
-    } catch (error) {
-        //form_el invalid
-    }
+    let datali = []
+    ref_data.forEach(res => {
+        let data = {id:res.id, ...res.data()}
+        datali.push(data)
+    })
 
-    console.log(form_data)
+    return datali
+}
 
-    let ref
-    let last_ref = get_json("last_ref")
-    let db = firebase.firestore()
-    if (optiune === "camera") {
-        ref = build_query(db.collection("listing"), localitate, buget, last_ref)
-    } 
-    else if (optiune === "coleg") {
-        ref = build_query(db.collection("user"), localitate, buget, last_ref)
-    }
-    
-    // Parse data
+
+async function execute_query_and_store_items(ref){
+
+    disable_btn("cauta")
     let ref_data = await ref.get()
+    enable_btn("cauta")
 
-    let anunturi
-
-    try {
-        last_ref = ref_data.docs[ref_data.docs.length-1].id
-        
-        let prev_last_ref = get_json("last_ref") 
-        
-        // console.log(prev_last_ref, last_ref)
-
-        if (prev_last_ref === last_ref) {
-            clear_json("last_ref")
-            toast("Nu sunt anunturi de aratat!", false, 5000)
-            disable_show_more_btn()
-            anunturi = []
-        }
-        else {
-            save_json("last_ref", last_ref)
-            anunturi = parse_ref_data(ref_data)
-        }
-
-    } catch (error) {
-        toast("Nu sunt anunturi de aratat!", false, 5000)
-        disable_show_more_btn()
-        clear_json("last_ref")
+    if (ref_data.empty) {
+        toast("Nu mai sunt anunturi", false, 8000)
+        store.items = undefined
+        store.last_ref = undefined
     }
-
-    console.log("anunturi ", anunturi)
-
-    return anunturi
+    else {
+        store.last_ref = ref_data.docs[ref_data.docs.length-1].id
+        let data = parse_ref_data(ref_data)
+        
+        if (store.items === undefined) { store.items = data } 
+        else { store.items = store.items.concat(data) }
+        
+    }
 }
 
+
+function process_form(event){
+    event.preventDefault()
+    store_form_data(event)
+    let ref = build_query()
+    execute_query_and_store_items(ref)
+
+    console.log("form submited: ", store)
+
+}
+
+
+// View
 
 const FormAnunturi = {
     view: vnode => {
-        return m("form", {onsubmit:event => {
-            event.preventDefault()
-            freeze_form(event.target)
-            vnode.attrs.get_listings(event)
-            enable_show_more_btn() 
-            unfreeze_form(event.target)
-        }}, [
+        return m("form", {onsubmit:event => process_form(event)}, [
             m(".input", [
                 m("label", {for:"localitate"}, "Localitate"),
                 m("input", {type:"text", name:"localitate", id:"localitate"})
@@ -181,7 +196,7 @@ const FormAnunturi = {
             m("button", {type:"submit", class:"btn large heavy-purple", id:"cauta"}, "Cauta camera"),
 
             m(".input", {style:"margin-top:1rem;"}, [
-                m("select", {name:"optiune", id:"optiune", onchange:toggle_cauta}, [
+                m("select", {name:"optiune", id:"optiune", onchange:process_option}, [
                     m("option", {value:"camera"}, "Camera"),
                     m("option", {value:"coleg"}, "Coleg"),
                 ])
@@ -192,161 +207,27 @@ const FormAnunturi = {
 }
 
 
-function close_modal(){
-    document.querySelector(".modal").style.display = "none"
-    document.body.style.overflow = "auto"
-}
 
 
-const ModalImage = {
+
+
+
+
+const Listings = {
+    oninit: prep,
     view: () => {
-        return m(".modal", {onclick:close_modal}, [
-            m("img.close", {src:"./static/svg/close.svg", onclick:close_modal}),
-            m("img.modal-content"),
-            m(".caption")
-        ])
-    }
-}
-
-
-function fullscreen_image(event){
-
-    let modal = document.querySelector(".modal")
-    let modalImg = document.querySelector("img.modal-content")
-    let captionText = document.querySelector(".caption")
-
-    modal.style.display = "block"
-    modalImg.src = event.target.src
-    captionText.innerHTML = event.target.alt
-
-    document.body.style.overflow = "hidden"
-
-}
-
-
-const DescriereCamera = (data) => {
-
-    data = data.camera
-    CardUtilizator.user_email = data.utilizator
-    
-    console.log("DescriereCamera ", data)
-    
-    return {
-        
-        view: _ => {
-
-            return [
-                m("img.responsive-img", {src:data.foto}),
-                m(".descriere", [
-                    m("h5", data.localitate + ", " + data.pret + " Euro"),
-                    m("span", data.descriere),
-                ]),
-
-                m(CardUtilizator),
-
-                m("button.btn", {type:"button", onclick:() => {
-                    document.querySelector("form").classList.remove("none")
-                    document.querySelector("section").classList.remove("none")
-                    document.querySelector("#show-more").classList.remove("none")
-                    document.querySelector("#descriere-anunt").classList.add("none")
-                    document.querySelector("main").classList.add("center")
-                    window.scrollTo({ top: 70, behavior: 'smooth' })
-                }}, "Inapoi la anunturi")
-            ]
-        }
+        return [
+            m(FormAnunturi)
+        ]
     }
 }
 
 
 
-function show_details(data){
-
-    m.mount(document.querySelector("#descriere-anunt"), DescriereCamera(data))
-
-    document.querySelector("#descriere-anunt").classList.remove("none")
-    document.querySelector("form").classList.add("none")
-    document.querySelector("section").classList.add("none")
-    document.querySelector("#show-more").classList.add("none")
-    window.scrollTo({ top: 70, behavior: 'smooth' })
- 
-}
 
 
 
-const Camera = {
-    view: vnode => {
-
-        let title = vnode.attrs.camera.localitate + ", " + vnode.attrs.camera.pret + " Euro"
-
-        return m(".anunt", {id:vnode.attrs.id}, [
-            m("img.foto-camera", {src:vnode.attrs.camera.foto, 
-                                alt:title,
-                                onclick: event => fullscreen_image(event)}
-                                ),
-            m("span.title", {onclick: _ => show_details(vnode.attrs) }, title)
-        ])
-    }
-}
 
 
-const Anunturi = {
-    view: vnode => {
-        return m("section.anunturi.mb-2", [
-            vnode.attrs.listings ? vnode.attrs.listings.map(obj => {
-                return m(Camera, obj) 
-            }) : toast("Se incarca anunturile...", true, 1000)
-        ])
-    }
-}
 
-
-const Listings =  {
-    listings: [],
-    get_listings: async (form_el) => {
-
-            document.getElementById("show-more").classList.remove("hide")
-            
-            if (form_el !== undefined) {
-                console.log(form_el.target.type)
-                if (form_el.target.type !== "button") {
-                    Listings.listings = [] 
-                }
-            }
-            
-            let form_data = {localitate:document.getElementById("localitate").value, 
-                            buget:document.getElementById("buget").value, 
-                            optiune:document.getElementById("optiune").value}
-            
-            let objectlist = await get_data(form_data)   
-            Listings.listings = Listings.listings.concat(objectlist)
-        
-            m.redraw()
-
-        },
-    oncreate: () => {
-            prep()
-            if (Listings.listings !== []) {
-                Listings.get_listings()
-            }
-        },
-    onremove: () => {
-        Listings.listings = []
-    },
-    view: _ => {
-        return [m(FormAnunturi, {get_listings:Listings.get_listings}),
-                m(Anunturi, {listings: Listings.listings}),
-                m("button.btn#show-more", {type:"button", onclick:Listings.get_listings}, "Arata mai multe"),
-                m(ModalImage),
-                m("#descriere-anunt")
-            ]
-        }
-}
-
-
-// https://tinyurl.com/y9zkw4ev
-// https://flems.io/#0=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-JUMwDKC4bxcBQNMQFGhFA0REN-aQnQpBoEeM8N4vxsB3mBOzF4u7v4AAFuS0CEGiG9sY90cCHguHQYL7qKDIPObAxgGzKCAA
-
-let VeziAnunturi = Listings
-
-export default VeziAnunturi
-
+export default Listings

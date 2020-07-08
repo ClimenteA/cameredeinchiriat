@@ -32,7 +32,7 @@ async function adauga_camera(event){
         let foto = form_data.foto
         delete form_data.foto
         form_data.localitate = clean_str(form_data.localitate)
-        form_data.pret = Number(form_data.pret.trim())
+        form_data.buget = Number(form_data.buget.trim())
 
         let docRef = await firebase.firestore().collection('listing').add(form_data)
         let path = `/listingImage/${docRef.id}/${foto.name}`
@@ -88,8 +88,8 @@ const AdaugaCamera = {
             ]),
     
             m(".input", [
-                m("label", {for:"pret"}, "Pret"),
-                m("input", {type:"tel", name:"pret", id:"pret", required:"required"})
+                m("label", {for:"buget"}, "Pret pe luna"),
+                m("input", {type:"tel", name:"buget", id:"buget", required:"required"})
             ]),
     
             m(".input", [

@@ -23,7 +23,7 @@ function parse_query_data(query_data){
 
 
 const CardUtilizator = {
-
+    all_users: false,
     user_data: null,
     user_email: null,
 
@@ -31,9 +31,12 @@ const CardUtilizator = {
 
         let query = firebase.firestore().collection("user")
 
-        if (CardUtilizator.user_email) {
-            query.where("email", "==", CardUtilizator.user_email)
+        if (CardUtilizator.all_users) {
+            // No filter
         }
+        else if (CardUtilizator.user_email) {
+            query.where("email", "==", CardUtilizator.user_email)
+        } 
         else {
             firebase.auth().onAuthStateChanged(user => {
                 if (user) {
@@ -45,6 +48,7 @@ const CardUtilizator = {
         let query_data = await query.get()  
         CardUtilizator.user_data = parse_query_data(query_data)
         console.log(CardUtilizator.user_data)
+        
         m.redraw()
     },
 
