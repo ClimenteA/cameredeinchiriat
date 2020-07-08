@@ -16,17 +16,20 @@ import {CardUtilizator} from "./ContUtilizator.js"
 
 // Model
 
-let nbr_of_items = 10
-let btn_text = "Ok"
+let items_per_page = 1
 
-let store = {
-    option: "camera",
-    form_data: {localitate: "", buget: "", optiune: "camera"}, 
-    last_ref: undefined,
-    items: undefined
+let store 
+
+function default_store(){
+    store = {
+        form_data: {localitate: "", buget: "", optiune: "camera"}, 
+        last_ref: undefined,
+        items: undefined,
+        reached_end: false
+    } 
 }
 
-
+default_store()
 
 
 // Controller
@@ -38,22 +41,6 @@ function prep(){
     close_menu()
 }
 
-
-function disable_btn(id){
-    let btn = document.getElementById(id)
-    btn_text = btn.innerText
-    btn.innerText = "..."
-    btn.style.cursor = "default"
-    btn.disabled = true    
-}
-
-function enable_btn(id){
-    let btn = document.getElementById(id)
-    btn.innerText = btn_text
-    btn.style.cursor = "pointer"
-    btn.disabled = false    
-}
-
 function process_option(){
     try {
         let optiune = document.getElementById("optiune")
@@ -61,7 +48,6 @@ function process_option(){
         btn.innerText = "Cauta " + optiune.value
         document.querySelector("title").innerText = "Cauta " + optiune.value
         
-        store.option = optiune.value
         store.last_ref = undefined
         store.items = undefined
 
@@ -114,17 +100,17 @@ function build_query(){
 
     // Add limit of items
     if (store.last_ref === undefined) {
-        ref = ref.limit(nbr_of_items)
+        ref = ref.limit(items_per_page)
     } 
     else {
         try {
             ref = ref.orderBy(firebase.firestore.FieldPath.documentId())
                 .startAfter(store.last_ref)
-                .limit(nbr_of_items)    
+                .limit(items_per_page)    
         } catch (error) {
             ref = ref.orderBy("buget")
                     .startAfter(last_ref)
-                    .limit(nbr_of_items)   
+                    .limit(items_per_page)   
         }
     }
 
@@ -147,32 +133,44 @@ function parse_ref_data(ref_data){
 
 async function execute_query_and_store_items(ref){
 
-    disable_btn("cauta")
     let ref_data = await ref.get()
-    enable_btn("cauta")
+    m.redraw()
 
     if (ref_data.empty) {
         toast("Nu mai sunt anunturi", false, 8000)
-        store.items = undefined
+        // store.items = undefined
         store.last_ref = undefined
+        store.reached_end = true
+        document.getElementById("show-more").disabled = true
     }
     else {
         store.last_ref = ref_data.docs[ref_data.docs.length-1].id
+        store.reached_end = false
+        document.getElementById("show-more").disabled = false
         let data = parse_ref_data(ref_data)
-        
         if (store.items === undefined) { store.items = data } 
         else { store.items = store.items.concat(data) }
-        
     }
+}
+
+
+function get_items() {
+    let ref = build_query()
+    execute_query_and_store_items(ref)
 }
 
 
 function process_form(event){
     event.preventDefault()
+    
     store_form_data(event)
-    let ref = build_query()
-    execute_query_and_store_items(ref)
-
+    
+    document.getElementById("cauta").disabled = true 
+    get_items()
+    document.getElementById("cauta").disabled = false
+    
+    store.reached_end = false
+    
     console.log("form submited: ", store)
 
 }
@@ -207,9 +205,51 @@ const FormAnunturi = {
 }
 
 
+const Camera = {
+    view: vnode => {
+
+        let title = vnode.attrs.localitate + ", " + vnode.attrs.buget + " Euro"
+
+        return m(".anunt", {id:vnode.attrs.id}, [
+            m("img.foto-camera",
+            {src:vnode.attrs.foto, alt:title, 
+                onclick: event => fullscreen_image(event) }
+            ),
+            m("span.title", {onclick: _ => show_details(vnode.attrs) }, title)
+        ])
+    }
+}
 
 
+const Anunturi = {
+    oncreate: get_items,
+    onremove: () => {
+        store.items = undefined
+    },
+    view: () => {
+        return m("section.anunturi.mb-2", [
+            store.items ? store.items.map(obj => {
+                return m(Camera, obj)
+            }) : toast("Se incarca anunturile...", true, 1000)
+        ])
+    }
+}
 
+
+const ShowMore = {
+    view: () => {
+        
+        return m("button.btn#show-more", {type:"button", 
+            onclick: event => {        
+                    event.target.disabled = true
+                    event.target.style.cursor = "default"
+                    get_items()
+                    event.target.disabled = false
+                    event.target.style.cursor = "pointer"
+                }
+        }, "Arata mai multe")
+    }
+}
 
 
 
@@ -217,16 +257,12 @@ const Listings = {
     oninit: prep,
     view: () => {
         return [
-            m(FormAnunturi)
+            m(FormAnunturi),
+            m(Anunturi),
+            m(ShowMore)
         ]
     }
 }
-
-
-
-
-
-
 
 
 
