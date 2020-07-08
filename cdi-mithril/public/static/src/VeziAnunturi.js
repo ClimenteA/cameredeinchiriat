@@ -1,17 +1,7 @@
 import { close_menu } from "./NavFooter.js"
 import {
-    freeze_form,
-    unfreeze_form,
-    toast,
-    save_json,
-    get_json,
-    clear_json,
-    parse_form,
-    clean_str
+    toast
 } from "./Utils.js"
-
-import {CardUtilizator} from "./ContUtilizator.js"
-
 
 
 // Model
@@ -22,6 +12,7 @@ let store
 
 function default_store(){
     store = {
+        camera: true,
         form_data: {localitate: "", buget: "", optiune: "camera"}, 
         last_ref: undefined,
         items: undefined,
@@ -47,6 +38,9 @@ function process_option(){
         let btn = document.getElementById("cauta")
         btn.innerText = "Cauta " + optiune.value
         document.querySelector("title").innerText = "Cauta " + optiune.value
+
+        if (optiune.value === "camera") { store.camera = true } 
+        else { store.camera = false }
         
         store.last_ref = undefined
         store.items = undefined
@@ -221,6 +215,25 @@ const Camera = {
 }
 
 
+const CardUtilizator = {
+    
+    view: vnode => {
+        
+        let title = vnode.attrs.localitate + ", " + "buget " + vnode.attrs.buget + " Euro"
+        
+        return m("section.user", [
+            m("img", {src:vnode.attrs.foto}),
+            m("h6", vnode.attrs.nume),
+            m("span", title),
+            m("span", vnode.attrs.telefon),
+            m("span", vnode.attrs.email)
+        ])
+    }    
+}
+
+
+
+
 const Anunturi = {
     oncreate: get_items,
     onremove: () => {
@@ -229,7 +242,7 @@ const Anunturi = {
     view: () => {
         return m("section.anunturi.mb-2", [
             store.items ? store.items.map(obj => {
-                return m(Camera, obj)
+                return store.camera ? m(Camera, obj) : m(CardUtilizator, obj)
             }) : toast("Se incarca anunturile...", true, 1000)
         ])
     }
