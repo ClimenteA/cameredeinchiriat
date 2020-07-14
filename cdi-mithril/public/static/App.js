@@ -6,7 +6,6 @@
 // rollup App.js --file bundle.js --compact --format iife
 // https://www.npmjs.com/package/idb-keyval
 
-
 // TODO mithril example
 // https://tinyurl.com/yavo4lv7
 
@@ -14,6 +13,7 @@
 // https://stackoverflow.com/questions/49682327/how-to-update-a-single-firebase-firestore-document/49682615
 
 // https://awesomeopensource.com/project/orbitbot/awesome-mithril
+// https://github.com/osban/mithril-codex/blob/master/how2code.md
 
 
 import {
@@ -33,34 +33,13 @@ import RaporteazaProblema from "./src/RaporteazaProblema.js"
 import Contact from "./src/Contact.js"
 import CreeazaUnCont from "./src/CreeazaUnCont.js"
 import ReseteazaParola from "./src/ReseteazaParola.js"
-import {ContUtilizator} from "./src/ContUtilizator.js"
-import DetaliiCamera from "./src/DetaliiCamera.js"
+import ContUtilizator from "./src/ContUtilizator.js"
 import ActualizeazaCont from "./src/ActualizeazaCont.js"
 import Error404 from "./src/404.js"
 
 
-// Initialize firebase
-if (typeof firebase === 'undefined') throw new Error('hosting/init-error: Firebase SDK not detected. You must include it before /__/firebase/init.js');
-var firebaseConfig = {
-  "projectId": "cameredeinchiriat-b7885",
-  "appId": "1:841749487216:web:602b8e01ac6561aad4deb5",
-  "databaseURL": "https://cameredeinchiriat-b7885.firebaseio.com",
-  "storageBucket": "cameredeinchiriat-b7885.appspot.com",
-  "locationId": "europe-west6",
-  "apiKey": "AIzaSyA4oEHfBeM_8mmYXDiaao01eIHkdfmuIr0",
-  "authDomain": "cameredeinchiriat-b7885.firebaseapp.com",
-  "messagingSenderId": "841749487216",
-  "measurementId": "G-2961KQZJFR"
-};
-if (firebaseConfig) {
-  firebase.initializeApp(firebaseConfig);
-}
-
-
-
-
 const header = document.querySelector("header") 
-const main = document.querySelector("main")
+const main   = document.querySelector("main")
 const footer = document.querySelector("footer")
 
 

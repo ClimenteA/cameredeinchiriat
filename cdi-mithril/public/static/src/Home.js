@@ -38,7 +38,6 @@ function prep() {
     document.querySelector("title").innerText = "Camere de inchiriat"
     close_menu()
     type_motive()
-    clear_json("last_ref")
 }
 
 
@@ -46,7 +45,7 @@ const Home = {
     oncreate: prep,
     view: () => {
         return m("section", {class:"mt-4"}, [
-            m("a", {href:"#!/vezi-anunturi", class:"btn heavy-purple large"}, "Cauta o camera"),
+            m("a", {href:"#!/vezi-anunturi", class:"btn heavy-purple large", style:"height:20px;"}, "Cauta o camera"),
             m("h1", {class:"erica-font flow-text"}, m.trust(`Imparte chiria si pastreaza banii 
             <br> pentru <span id="motive">vacante</span>`))
         ])

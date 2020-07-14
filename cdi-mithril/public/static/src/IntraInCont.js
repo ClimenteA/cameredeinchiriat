@@ -59,10 +59,13 @@ function prep(){
 
 
 const IntraInCont = {
-    oninit: async () => {
-        if (await firebase.auth().currentUser) {
-            return m.route.set("/cont-utilizator")
-        }
+    oninit: () => {
+        
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                return m.route.set("/cont-utilizator")
+            }
+        })
     },
     oncreate: prep,
     view: vnode => {

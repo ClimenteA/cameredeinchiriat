@@ -1,12 +1,16 @@
 import { close_menu } from "./NavFooter.js"
-import {
-    toast
+import { 
+    toast, 
+    parse_query_data,
+    get_user_data
 } from "./Utils.js"
+
+import CardUtilizator from "./CardUtilizator.js"
 
 
 // Model
 
-let items_per_page = 1
+let items_per_page = 10
 
 let store 
 
@@ -29,6 +33,7 @@ function prep(){
     document.body.className = "light-green blocuri"
     document.querySelector("main").className = "center"
     document.querySelector("title").innerText = "Cauta camera"
+    window.scrollTo({ top: 0 })
     close_menu()
 }
 
@@ -46,7 +51,9 @@ function process_option(){
         store.items = undefined
 
         console.log("option changed: ", store)
-        
+
+        document.getElementById("cauta").click() 
+
         enable_show_more_btn()
 
     } catch (error) {
@@ -58,7 +65,12 @@ function process_option(){
 function store_form_data(event){
     let form = new FormData(event.target) 
     let form_data = Object.fromEntries(form)
-    store.form_data = form_data
+
+    if (form_data !== store.form_data) {
+        default_store()
+        store.form_data = form_data 
+    } 
+    
 }
 
 function get_collection(){
@@ -79,50 +91,48 @@ function build_query(){
     let ref = get_collection()
 
     let localitate = store.form_data.localitate
-    let buget      = store.form_data.buget
+    let buget      = Number(store.form_data.buget)
+
+    console.info("Filters: ", localitate, buget)
     
     // Build query
     if (localitate && buget){   
-        ref = ref.where("localitate", "in", [localitate]).where("buget", "<=", buget)         
+        console.info("Filtru localitate && buget: ", localitate, buget)
+        ref = ref.where("localitate", "in", [localitate]).where("buget", ">=", buget)         
     }
     else if (localitate){
+        console.info("Filtru localitate: ", localitate)
         ref = ref.where("localitate", "in", [localitate])                  
     }
     else if (buget){
-        ref = ref.where("buget", "<=", buget)
+        console.info("Filtru buget: ", buget)
+        ref = ref.where("buget", ">=", buget)
     }
 
     // Add limit of items
     if (store.last_ref === undefined) {
         ref = ref.limit(items_per_page)
     } 
-    else {
-        try {
-            ref = ref.orderBy(firebase.firestore.FieldPath.documentId())
-                .startAfter(store.last_ref)
-                .limit(items_per_page)    
-        } catch (error) {
-            ref = ref.orderBy("buget")
-                    .startAfter(last_ref)
-                    .limit(items_per_page)   
-        }
+
+    if (buget && store.last_ref !== undefined) {
+        console.info("Sort by buget", buget, store.last_ref)
+        ref = ref.orderBy("buget")
+            .startAfter(store.last_ref)
+            .limit(items_per_page)
     }
 
+    else if (store.last_ref !== undefined) {
+        console.info("Sort by id", store.last_ref)
+        ref = ref.orderBy(firebase.firestore.FieldPath.documentId())
+            .startAfter(store.last_ref)
+            .limit(items_per_page)    
+    }
+        
+    console.info("Last ref is ", store.last_ref)
+
     return ref
-
 }
 
-
-function parse_ref_data(ref_data){   
-
-    let datali = []
-    ref_data.forEach(res => {
-        let data = {id:res.id, ...res.data()}
-        datali.push(data)
-    })
-
-    return datali
-}
 
 
 async function execute_query_and_store_items(ref){
@@ -141,7 +151,7 @@ async function execute_query_and_store_items(ref){
         store.last_ref = ref_data.docs[ref_data.docs.length-1].id
         store.reached_end = false
         document.getElementById("show-more").disabled = false
-        let data = parse_ref_data(ref_data)
+        let data = parse_query_data(ref_data)
         if (store.items === undefined) { store.items = data } 
         else { store.items = store.items.concat(data) }
     }
@@ -158,6 +168,8 @@ function process_form(event){
     event.preventDefault()
     
     store_form_data(event)
+
+    process_option()
     
     document.getElementById("cauta").disabled = true 
     get_items()
@@ -170,10 +182,28 @@ function process_form(event){
 }
 
 
+
+async function show_details(data) {
+
+    let user_data = await get_user_data(data.utilizator)
+
+    data = {...{"user_data": user_data}, ...data}
+
+    console.log("show_details data", data)
+
+    m.mount(desc, {view: () => m(DetaliiCamera, data)})
+    
+    desc.style.display = "grid" 
+    window.scrollTo({ top: 0 })
+}
+
+
+
+
 // View
 
 const FormAnunturi = {
-    view: vnode => {
+    view: () => {
         return m("form", {onsubmit:event => process_form(event)}, [
             m(".input", [
                 m("label", {for:"localitate"}, "Localitate"),
@@ -199,47 +229,67 @@ const FormAnunturi = {
 }
 
 
-const Camera = {
-    view: vnode => {
+const AscundeDescriere = {
+    view: () => {
+        return m("button.btn.moderate-purple", 
+        { onclick: () => {
+            desc.style.display = "none"
+        }}, 
+        "< Inapoi")
+    }
+}
 
-        let title = vnode.attrs.localitate + ", " + vnode.attrs.buget + " Euro"
 
-        return m(".anunt", {id:vnode.attrs.id}, [
-            m("img.foto-camera",
-            {src:vnode.attrs.foto, alt:title, 
-                onclick: event => fullscreen_image(event) }
-            ),
-            m("span.title", {onclick: _ => show_details(vnode.attrs) }, title)
+const DetaliiCamera = {
+
+    view: v => {
+        return m(".modal.blocuri", [
+
+            m(AscundeDescriere),
+            m("img.responsive-img", {src:v.attrs.foto}),
+            
+            m(".center.user-layout", [
+                
+                m(".descriere", [
+                    m("h5", v.attrs.localitate + ", " + v.attrs.buget + " Euro"),
+                    m("span", v.attrs.descriere),
+                ]),
+    
+                m(CardUtilizator, v.attrs.user_data),
+
+            ]),
+            
+            m(AscundeDescriere)            
+
         ])
     }
 }
 
 
-const CardUtilizator = {
-    
-    view: vnode => {
-        
-        let title = vnode.attrs.localitate + ", " + "buget " + vnode.attrs.buget + " Euro"
-        
-        return m("section.user", [
-            m("img", {src:vnode.attrs.foto}),
-            m("h6", vnode.attrs.nume),
-            m("span", title),
-            m("span", vnode.attrs.telefon),
-            m("span", vnode.attrs.email)
-        ])
-    }    
-}
+const Camera = {
 
+    view: v => {
+
+        let title = v.attrs.localitate + ", " + v.attrs.buget + " Euro"
+
+        return m(".anunt", {id:v.attrs.id}, [
+            m("img.foto-camera",
+            {src:v.attrs.foto, alt:title, 
+                onclick: () => show_details(v.attrs) }
+            ),
+            m("span.title", {onclick: () => show_details(v.attrs) }, title)
+        ])
+    }
+}
 
 
 
 const Anunturi = {
     oncreate: get_items,
-    onremove: () => {
-        store.items = undefined
-    },
     view: () => {
+        
+        console.info("Show Camera ", store.camera)
+
         return m("section.anunturi.mb-2", [
             store.items ? store.items.map(obj => {
                 return store.camera ? m(Camera, obj) : m(CardUtilizator, obj)
@@ -264,15 +314,18 @@ const ShowMore = {
     }
 }
 
-
+let desc
 
 const Listings = {
     oninit: prep,
+    oncreate: () => desc = document.querySelector("#descriere-anunt"),
+    onremove:default_store,
     view: () => {
         return [
             m(FormAnunturi),
             m(Anunturi),
-            m(ShowMore)
+            m(ShowMore),
+            m("#descriere-anunt")
         ]
     }
 }

@@ -1,6 +1,3 @@
-// import { set, get, clear } from "../idb.js"
- 
-
 // HACK to trigger firebase auth
 async function callFirebaseAuth(){
     try {
@@ -73,8 +70,6 @@ function toast(msg, success=true, ms=3000) {
         div.style.background = "#F23737"
     }
 
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-
     div.addEventListener("click", (event) => {
         event.target.remove()
     })
@@ -144,6 +139,36 @@ function showimage(img_link) {
 }
 
 
+
+function parse_query_data(ref_data){   
+
+    let datali = []
+    ref_data.forEach(res => {
+        let data = {id:res.id, ...res.data()}
+        datali.push(data)
+    })
+
+    return datali
+}
+
+
+async function get_user_data(email=undefined) {
+
+    if (email === undefined) {
+        email = await firebase.auth().currentUser.email
+    }
+
+    let query_data = await firebase.firestore()
+                        .collection("user")
+                        .where("email", "==", email)
+                        .get()
+    
+    let user_data = parse_query_data(query_data)
+    
+    return user_data[0]
+}
+
+
 export {
     freeze_form,
     unfreeze_form,
@@ -153,5 +178,7 @@ export {
     get_json,
     clear_json,
     parse_form,
-    clean_str
+    clean_str,
+    parse_query_data,
+    get_user_data
 }

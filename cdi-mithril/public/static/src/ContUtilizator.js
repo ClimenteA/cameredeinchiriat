@@ -1,5 +1,24 @@
 import { close_menu } from "./NavFooter.js"
-import { toast } from "./Utils.js"
+import { 
+    toast, 
+    parse_query_data,
+    get_user_data
+} from "./Utils.js"
+
+import CardUtilizator from "./CardUtilizator.js"
+
+
+// Model
+
+
+let store = {
+    user_data: undefined,
+    anunturi_postate: undefined
+}
+
+
+
+// Controller
 
 
 function prep(){
@@ -10,89 +29,45 @@ function prep(){
 }
 
 
-function parse_query_data(query_data){   
-
-    let data = []
-    query_data.forEach(res => {
-        let jdata = {id:res.id, data:res.data()}
-        data.push(jdata)
-    })
-
-    return data[0].data
-}
-
-
-const CardUtilizator = {
-    all_users: false,
-    user_data: null,
-    user_email: null,
-
-    get_user_data: async _ => {
-
-        let query = firebase.firestore().collection("user")
-
-        if (CardUtilizator.all_users) {
-            // No filter
-        }
-        else if (CardUtilizator.user_email) {
-            query.where("email", "==", CardUtilizator.user_email)
-        } 
-        else {
-            firebase.auth().onAuthStateChanged(user => {
-                if (user) {
-                    query.where("email", "==", user.email)
-                }
-            })
-        }
-        
-        let query_data = await query.get()  
-        CardUtilizator.user_data = parse_query_data(query_data)
-        console.log(CardUtilizator.user_data)
-        
-        m.redraw()
-    },
-
-    oninit: () => {
-        prep()
-        CardUtilizator.get_user_data()
-    },
-
-    view: () => {
-
-        const user_card = data => [
-                m("img", {src:data.foto}),
-                m("h6", data.nume),
-                m("span", data.localitate + ", " + "buget " + data.buget + " Euro"),
-                m("span", data.telefon),
-                m("span", data.email)
-            ]
-
-        return m("section.user", 
-        CardUtilizator.user_data ? 
-        user_card(CardUtilizator.user_data) : m("h5", "...") )
-    }
-
-    }
-
+async function anunturi_postate() {
     
+    let email
+    
+    try {
+        email = await firebase.auth().currentUser.email    
+    } catch (error) {
+       m.route.set("/intra-in-cont") 
+    }
+
+    let ref = firebase.firestore()
+    let query_data = await ref.collection("listing")
+                            .where("utilizator", "==", email)
+                            .get()
+
+    let data = parse_query_data(query_data)
+
+    console.log("Anunturi postate", data)
+
+    return data
+
+} 
+
+
+
+// View
 
 
 const AnunturiPostate = {
-    anunturi: [],
-
-    oninit: vnode => {
-        AnunturiPostate.anunturi = [ {title:"TEST Iasi, buget 120Euro", 
-                                    id_camera:"123212"},
-                                    {title:"TEST Iasi, buget 50Euro", 
-                                    id_camera:"124444"}
-                                    ]
+    oncreate: async () => {
+        store.anunturi_postate = await anunturi_postate()
+        m.redraw()
     },
     view: () => {
         return m("section.camere-postate", [
             m("h6", "Camere postate"),
-            AnunturiPostate.anunturi ? m("ul", AnunturiPostate.anunturi.map(anunt => {
+            store.anunturi_postate ? m("ul", store.anunturi_postate.map(anunt => {
                 return m("li", [
-                    m("a", {href:`#!/detalii-camera/${anunt.id_camera}`}, anunt.title)
+                    m("span", "- " + anunt.localitate + " " + anunt.buget + " Euro")
                 ]) 
             })) : m("h5", "...")
         ])
@@ -101,17 +76,22 @@ const AnunturiPostate = {
 
 
 const ContUtilizator = {
+    oncreate: async () => {
+        prep()
+        store.user_data = await get_user_data()
+        m.redraw()
+        console.log(store.user_data)
+    },
     view: () => {
+        
         return m("div.center.user-layout", [
-            m(CardUtilizator),
+            store.user_data ? m(CardUtilizator, store.user_data) : m("h1", "..."),
             m(AnunturiPostate),
             m("a", { href:"#!/actualizeaza-cont", class:"btn moderate-purple"}, "Actualizeaza contul")
         ])
+
     }
 }
 
 
-export {
-    CardUtilizator,
-    ContUtilizator
-}
+export default ContUtilizator

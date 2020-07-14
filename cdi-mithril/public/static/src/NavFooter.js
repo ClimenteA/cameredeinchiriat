@@ -4,13 +4,15 @@ const menu_path = "./static/svg/menu.svg"
 const close_path = "./static/svg/close.svg"
 
 function show_menu() {
-    let menu_container = document.querySelector("#menu")
+    let menu_container = document.querySelector("#menu-content")
     menu_container.className = "menu-expanded show"
+    document.querySelector("#menu").style.display = "none"
 }
 
 function close_menu() {
-    let menu_container = document.querySelector("#menu")
+    let menu_container = document.querySelector("#menu-content")
     menu_container.className = "menu-expanded hide"
+    document.querySelector("#menu").style.display = "block"
 }
 
 
@@ -23,11 +25,11 @@ const Nav = {
                     m("img", {class:"logo", src:logo_path, alt:"camere de inchiriat"}),
                 ]),
 
-                m("img", {class:"menu", src:menu_path, alt:"menu", onclick:show_menu}),
+                m("img", {id:"menu", class:"menu", src:menu_path, alt:"menu", onclick:show_menu}),
 
             ]),
 
-            m("div", {class:"menu-expanded hide", id:"menu"}, [
+            m("div", {class:"menu-expanded hide", id:"menu-content"}, [
                 m("img", {src:close_path, alt:"close", onclick:close_menu}),
                 m("ul", [
                     m("li", m("a", {href:"#!/intra-in-cont"}, "Intra in cont")),
@@ -39,6 +41,7 @@ const Nav = {
     
     ])}
 }
+
 
 
 const Footer = {

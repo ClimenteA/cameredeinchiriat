@@ -3,13 +3,15 @@ const menu_path = "./static/svg/menu.svg";
 const close_path = "./static/svg/close.svg";
 
 function show_menu() {
-    let menu_container = document.querySelector("#menu");
+    let menu_container = document.querySelector("#menu-content");
     menu_container.className = "menu-expanded show";
+    document.querySelector("#menu").style.display = "none";
 }
 
 function close_menu() {
-    let menu_container = document.querySelector("#menu");
+    let menu_container = document.querySelector("#menu-content");
     menu_container.className = "menu-expanded hide";
+    document.querySelector("#menu").style.display = "block";
 }
 
 
@@ -22,11 +24,11 @@ const Nav = {
                     m("img", {class:"logo", src:logo_path, alt:"camere de inchiriat"}),
                 ]),
 
-                m("img", {class:"menu", src:menu_path, alt:"menu", onclick:show_menu}),
+                m("img", {id:"menu", class:"menu", src:menu_path, alt:"menu", onclick:show_menu}),
 
             ]),
 
-            m("div", {class:"menu-expanded hide", id:"menu"}, [
+            m("div", {class:"menu-expanded hide", id:"menu-content"}, [
                 m("img", {src:close_path, alt:"close", onclick:close_menu}),
                 m("ul", [
                     m("li", m("a", {href:"#!/intra-in-cont"}, "Intra in cont")),
@@ -40,6 +42,7 @@ const Nav = {
 };
 
 
+
 const Footer = {
     view: () => {
         return m("div", {class:"footer"}, [
@@ -50,10 +53,7 @@ const Footer = {
             m("a", {href:"#!/contact"}, "Contact"),
         ])
     }
-};// import { set, get, clear } from "../idb.js"
- 
-
-// HACK to trigger firebase auth
+};// HACK to trigger firebase auth
 async function callFirebaseAuth(){
     try {
         await firebase.auth().currentUser;    
@@ -125,8 +125,6 @@ function toast(msg, success=true, ms=3000) {
         div.style.background = "#F23737";
     }
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
     div.addEventListener("click", (event) => {
         event.target.remove();
     });
@@ -146,31 +144,40 @@ function name_from_email(email) {
 }
 
 
-
-function save_json(key, json_obj){
-    let json_str = JSON.stringify(json_obj);
-    sessionStorage.setItem(key, json_str);
-}
-
-function get_json(key){
-    return JSON.parse(sessionStorage.getItem(key))
-}
-
-
-function clear_json(key=null){
-    if (key){
-        sessionStorage.removeItem(key);
-    }
-    else {
-        sessionStorage.clear();
-    }
-}
-
-
 function clean_str(str) {
     str = str.charAt(0).toUpperCase() + str.toLowerCase().slice(1);
     str = str.replace(/\s+/g,' ').trim();
     return str
+}
+
+
+
+function parse_query_data(ref_data){   
+
+    let datali = [];
+    ref_data.forEach(res => {
+        let data = {id:res.id, ...res.data()};
+        datali.push(data);
+    });
+
+    return datali
+}
+
+
+async function get_user_data(email=undefined) {
+
+    if (email === undefined) {
+        email = await firebase.auth().currentUser.email;
+    }
+
+    let query_data = await firebase.firestore()
+                        .collection("user")
+                        .where("email", "==", email)
+                        .get();
+    
+    let user_data = parse_query_data(query_data);
+    
+    return user_data[0]
 }const type_motive = _ => {
 
     const motive = [
@@ -206,7 +213,6 @@ function prep() {
     document.querySelector("title").innerText = "Camere de inchiriat";
     close_menu();
     type_motive();
-    clear_json("last_ref");
 }
 
 
@@ -214,7 +220,7 @@ const Home = {
     oncreate: prep,
     view: () => {
         return m("section", {class:"mt-4"}, [
-            m("a", {href:"#!/vezi-anunturi", class:"btn heavy-purple large"}, "Cauta o camera"),
+            m("a", {href:"#!/vezi-anunturi", class:"btn heavy-purple large", style:"height:20px;"}, "Cauta o camera"),
             m("h1", {class:"erica-font flow-text"}, m.trust(`Imparte chiria si pastreaza banii 
             <br> pentru <span id="motive">vacante</span>`))
         ])
@@ -243,7 +249,7 @@ async function adauga_camera(event){
         let foto = form_data.foto;
         delete form_data.foto;
         form_data.localitate = clean_str(form_data.localitate);
-        form_data.pret = Number(form_data.pret.trim());
+        form_data.buget = Number(form_data.buget.trim());
 
         let docRef = await firebase.firestore().collection('listing').add(form_data);
         let path = `/listingImage/${docRef.id}/${foto.name}`;
@@ -299,8 +305,8 @@ const AdaugaCamera = {
             ]),
     
             m(".input", [
-                m("label", {for:"pret"}, "Pret"),
-                m("input", {type:"tel", name:"pret", id:"pret", required:"required"})
+                m("label", {for:"buget"}, "Pret pe luna"),
+                m("input", {type:"tel", name:"buget", id:"buget", required:"required"})
             ]),
     
             m(".input", [
@@ -376,10 +382,13 @@ function prep$2(){
 
 
 const IntraInCont = {
-    oninit: async () => {
-        if (await firebase.auth().currentUser) {
-            return m.route.set("/cont-utilizator")
-        }
+    oninit: () => {
+        
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                return m.route.set("/cont-utilizator")
+            }
+        });
     },
     oncreate: prep$2,
     view: vnode => {
@@ -402,128 +411,67 @@ const IntraInCont = {
             ])
         ])
     }
-};function prep$3(){
-    document.querySelector("main").removeAttribute("class");
+};const CardUtilizator = {
+    
+    view: v => {
+        
+        let title = v.attrs.localitate + ", " + "buget " + v.attrs.buget + " Euro";
+        
+        if (!v.attrs.foto) { v.attrs.foto = "./static/svg/skull.svg"; }
+
+        return m("section.user.dark-grey", [
+            m("img", {src:v.attrs.foto}),
+            m("h6", v.attrs.nume),
+            m("span", title),
+            m("span", v.attrs.telefon),
+            m("span", v.attrs.email)
+        ])
+    }        
+};// Model
+
+let items_per_page = 10;
+
+let store; 
+
+function default_store(){
+    store = {
+        camera: true,
+        form_data: {localitate: "", buget: "", optiune: "camera"}, 
+        last_ref: undefined,
+        items: undefined,
+        reached_end: false
+    }; 
+}
+
+default_store();
+
+
+// Controller
+
+function prep$3(){
     document.body.className = "light-green blocuri";
-    document.querySelector("title").innerText = "Cont utilizator";
+    document.querySelector("main").className = "center";
+    document.querySelector("title").innerText = "Cauta camera";
     close_menu();
 }
 
-
-function parse_query_data(query_data){   
-
-    let data = [];
-    query_data.forEach(res => {
-        let jdata = {id:res.id, data:res.data()};
-        data.push(jdata);
-    });
-
-    return data[0].data
-}
-
-
-const CardUtilizator = {
-
-    user_data: null,
-    user_email: null,
-
-    get_user_data: async _ => {
-
-        let query = firebase.firestore().collection("user");
-
-        if (CardUtilizator.user_email) {
-            query.where("email", "==", CardUtilizator.user_email);
-        }
-        else {
-            firebase.auth().onAuthStateChanged(user => {
-                if (user) {
-                    query.where("email", "==", user.email);
-                }
-            });
-        }
-        
-        let query_data = await query.get();  
-        CardUtilizator.user_data = parse_query_data(query_data);
-        console.log(CardUtilizator.user_data);
-        m.redraw();
-    },
-
-    oninit: () => {
-        prep$3();
-        CardUtilizator.get_user_data();
-    },
-
-    view: () => {
-
-        const user_card = data => [
-                m("img", {src:data.foto}),
-                m("h6", data.nume),
-                m("span", data.localitate + ", " + "buget " + data.buget + " Euro"),
-                m("span", data.telefon),
-                m("span", data.email)
-            ];
-
-        return m("section.user", 
-        CardUtilizator.user_data ? 
-        user_card(CardUtilizator.user_data) : m("h5", "...") )
-    }
-
-    };
-
-    
-
-
-const AnunturiPostate = {
-    anunturi: [],
-
-    oninit: vnode => {
-        AnunturiPostate.anunturi = [ {title:"TEST Iasi, buget 120Euro", 
-                                    id_camera:"123212"},
-                                    {title:"TEST Iasi, buget 50Euro", 
-                                    id_camera:"124444"}
-                                    ];
-    },
-    view: () => {
-        return m("section.camere-postate", [
-            m("h6", "Camere postate"),
-            AnunturiPostate.anunturi ? m("ul", AnunturiPostate.anunturi.map(anunt => {
-                return m("li", [
-                    m("a", {href:`#!/detalii-camera/${anunt.id_camera}`}, anunt.title)
-                ]) 
-            })) : m("h5", "...")
-        ])
-    }
-};
-
-
-const ContUtilizator = {
-    view: () => {
-        return m("div.center.user-layout", [
-            m(CardUtilizator),
-            m(AnunturiPostate),
-            m("a", { href:"#!/actualizeaza-cont", class:"btn moderate-purple"}, "Actualizeaza contul")
-        ])
-    }
-};function disable_show_more_btn(){
-    let show_more = document.getElementById("show-more");
-    show_more.style.cursor = "default";
-    show_more.disabled = true;    
-}
-
-
-function enable_show_more_btn(){
-    let show_more = document.getElementById("show-more");
-    show_more.style.cursor = "pointer";
-    show_more.disabled = false;    
-}
-
-
-function toggle_cauta(){
+function process_option(){
     try {
         let optiune = document.getElementById("optiune");
         let btn = document.getElementById("cauta");
         btn.innerText = "Cauta " + optiune.value;
         document.querySelector("title").innerText = "Cauta " + optiune.value;
+
+        if (optiune.value === "camera") { store.camera = true; } 
+        else { store.camera = false; }
+        
+        store.last_ref = undefined;
+        store.items = undefined;
+
+        console.log("option changed: ", store);
+
+        document.getElementById("cauta").click(); 
+
         enable_show_more_btn();
 
     } catch (error) {
@@ -532,132 +480,149 @@ function toggle_cauta(){
 }
 
 
-function prep$4(){
-    document.body.className = "light-green blocuri";
-    document.querySelector("main").className = "center";
-    document.querySelector("title").innerText = "Cauta camera";
-    close_menu();
+function store_form_data(event){
+    let form = new FormData(event.target); 
+    let form_data = Object.fromEntries(form);
+
+    if (form_data !== store.form_data) {
+        default_store();
+        store.form_data = form_data; 
+    } 
+    
+}
+
+function get_collection(){
+
+    let ref = firebase.firestore();
+    
+    if (store.form_data.optiune === "camera") {
+        ref = ref.collection("listing");
+    } else if (store.form_data.optiune === "coleg") {
+        ref = ref.collection("user");
+    }
+    return ref
 }
 
 
-function parse_ref_data(ref_data){   
+function build_query(){
+    
+    let ref = get_collection();
 
-    let anunturi = [];
-    ref_data.forEach(res => {
-        let jdata = {id:res.id, camera:res.data()};
-        anunturi.push(jdata);
-    });
+    let localitate = store.form_data.localitate;
+    let buget      = Number(store.form_data.buget);
 
-    return anunturi
-}
-
-
-const pgitems=10;
-
-function build_query(ref, localitate, buget, last_ref){
-
+    console.info("Filters: ", localitate, buget);
+    
     // Build query
     if (localitate && buget){   
-        ref = ref.where("localitate", "in", [localitate]).where("pret", "<=", buget);         
+        console.info("Filtru localitate && buget: ", localitate, buget);
+        ref = ref.where("localitate", "in", [localitate]).where("buget", ">=", buget);         
     }
     else if (localitate){
+        console.info("Filtru localitate: ", localitate);
         ref = ref.where("localitate", "in", [localitate]);                  
     }
     else if (buget){
-        ref = ref.where("pret", "<=", buget);
+        console.info("Filtru buget: ", buget);
+        ref = ref.where("buget", ">=", buget);
     }
 
-    // Check last ref 
-    if (last_ref === null) {
-        ref = ref.limit(pgitems);
+    // Add limit of items
+    if (store.last_ref === undefined) {
+        ref = ref.limit(items_per_page);
+    } 
+
+    if (buget && store.last_ref !== undefined) {
+        console.info("Sort by buget", buget, store.last_ref);
+        ref = ref.orderBy("buget")
+            .startAfter(store.last_ref)
+            .limit(items_per_page);
     }
-    else {
-        try {
-            ref = ref.orderBy(firebase.firestore.FieldPath.documentId())
-                .startAfter(last_ref)
-                .limit(pgitems);    
-        } catch (error) {
-            ref = ref.orderBy("pret")
-                    .startAfter(last_ref)
-                    .limit(pgitems);   
-        }   
+
+    else if (store.last_ref !== undefined) {
+        console.info("Sort by id", store.last_ref);
+        ref = ref.orderBy(firebase.firestore.FieldPath.documentId())
+            .startAfter(store.last_ref)
+            .limit(items_per_page);    
     }
+        
+    console.info("Last ref is ", store.last_ref);
 
     return ref
 }
 
 
-async function get_data(form_data){
-    
-    let localitate;
-    let buget;
-    let optiune;
 
-    try {
-        // form_data = Object.fromEntries(new FormData(form_el))
-        localitate = clean_str(form_data.localitate);
-        buget = Number(clean_str(form_data.buget));
-        optiune = form_data.optiune;   
-    } catch (error) {
-        //form_el invalid
-    }
+async function execute_query_and_store_items(ref){
 
-    console.log(form_data);
-
-    let ref;
-    let last_ref = get_json("last_ref");
-    let db = firebase.firestore();
-    if (optiune === "camera") {
-        ref = build_query(db.collection("listing"), localitate, buget, last_ref);
-    } 
-    else if (optiune === "coleg") {
-        ref = build_query(db.collection("user"), localitate, buget, last_ref);
-    }
-    
-    // Parse data
     let ref_data = await ref.get();
+    m.redraw();
 
-    let anunturi;
-
-    try {
-        last_ref = ref_data.docs[ref_data.docs.length-1].id;
-        
-        let prev_last_ref = get_json("last_ref"); 
-        
-        // console.log(prev_last_ref, last_ref)
-
-        if (prev_last_ref === last_ref) {
-            clear_json("last_ref");
-            toast("Nu sunt anunturi de aratat!", false, 5000);
-            disable_show_more_btn();
-            anunturi = [];
-        }
-        else {
-            save_json("last_ref", last_ref);
-            anunturi = parse_ref_data(ref_data);
-        }
-
-    } catch (error) {
-        toast("Nu sunt anunturi de aratat!", false, 5000);
-        disable_show_more_btn();
-        clear_json("last_ref");
+    if (ref_data.empty) {
+        toast("Nu mai sunt anunturi", false, 8000);
+        // store.items = undefined
+        store.last_ref = undefined;
+        store.reached_end = true;
+        document.getElementById("show-more").disabled = true;
     }
-
-    console.log("anunturi ", anunturi);
-
-    return anunturi
+    else {
+        store.last_ref = ref_data.docs[ref_data.docs.length-1].id;
+        store.reached_end = false;
+        document.getElementById("show-more").disabled = false;
+        let data = parse_query_data(ref_data);
+        if (store.items === undefined) { store.items = data; } 
+        else { store.items = store.items.concat(data); }
+    }
 }
 
 
+function get_items() {
+    let ref = build_query();
+    execute_query_and_store_items(ref);
+}
+
+
+function process_form(event){
+    event.preventDefault();
+    
+    store_form_data(event);
+
+    process_option();
+    
+    document.getElementById("cauta").disabled = true; 
+    get_items();
+    document.getElementById("cauta").disabled = false;
+    
+    store.reached_end = false;
+    
+    console.log("form submited: ", store);
+
+}
+
+
+
+async function show_details(data) {
+
+    let user_data = await get_user_data(data.utilizator);
+
+    data = {...{"user_data": user_data}, ...data};
+
+    console.log("show_details data", data);
+
+    m.mount(desc, {view: () => m(DetaliiCamera, data)});
+    
+    desc.style.display = "grid"; 
+    window.scrollTo({ top: 0 });
+}
+
+
+
+
+// View
+
 const FormAnunturi = {
-    view: vnode => {
-        return m("form", {onsubmit:event => {
-            event.preventDefault();
-            freeze_form(event.target);
-            vnode.attrs.get_listings(event);
-            enable_show_more_btn(); 
-            unfreeze_form(event.target);
-        }}, [
+    view: () => {
+        return m("form", {onsubmit:event => process_form(event)}, [
             m(".input", [
                 m("label", {for:"localitate"}, "Localitate"),
                 m("input", {type:"text", name:"localitate", id:"localitate"})
@@ -671,7 +636,7 @@ const FormAnunturi = {
             m("button", {type:"submit", class:"btn large heavy-purple", id:"cauta"}, "Cauta camera"),
 
             m(".input", {style:"margin-top:1rem;"}, [
-                m("select", {name:"optiune", id:"optiune", onchange:toggle_cauta}, [
+                m("select", {name:"optiune", id:"optiune", onchange:process_option}, [
                     m("option", {value:"camera"}, "Camera"),
                     m("option", {value:"coleg"}, "Coleg"),
                 ])
@@ -682,161 +647,106 @@ const FormAnunturi = {
 };
 
 
-function close_modal(){
-    document.querySelector(".modal").style.display = "none";
-    document.body.style.overflow = "auto";
-}
-
-
-const ModalImage = {
+const AscundeDescriere = {
     view: () => {
-        return m(".modal", {onclick:close_modal}, [
-            m("img.close", {src:"./static/svg/close.svg", onclick:close_modal}),
-            m("img.modal-content"),
-            m(".caption")
+        return m("button.btn.moderate-purple", 
+        { onclick: () => {
+            desc.style.display = "none";
+        }}, 
+        "Ascunde detalii")
+    }
+};
+
+
+const DetaliiCamera = {
+
+    view: v => {
+        return m(".modal.blocuri", [
+
+            m(AscundeDescriere),
+            m("img.responsive-img", {src:v.attrs.foto}),
+            
+            m(".center.user-layout", [
+                
+                m(".descriere", [
+                    m("h5", v.attrs.localitate + ", " + v.attrs.buget + " Euro"),
+                    m("span", v.attrs.descriere),
+                ]),
+    
+                m(CardUtilizator, v.attrs.user_data),
+
+            ]),
+            
+            m(AscundeDescriere)            
+
         ])
     }
 };
-
-
-function fullscreen_image(event){
-
-    let modal = document.querySelector(".modal");
-    let modalImg = document.querySelector("img.modal-content");
-    let captionText = document.querySelector(".caption");
-
-    modal.style.display = "block";
-    modalImg.src = event.target.src;
-    captionText.innerHTML = event.target.alt;
-
-    document.body.style.overflow = "hidden";
-
-}
-
-
-const DescriereCamera = (data) => {
-
-    data = data.camera;
-    CardUtilizator.user_email = data.utilizator;
-    
-    console.log("DescriereCamera ", data);
-    
-    return {
-        
-        view: _ => {
-
-            return [
-                m("img.responsive-img", {src:data.foto}),
-                m(".descriere", [
-                    m("h5", data.localitate + ", " + data.pret + " Euro"),
-                    m("span", data.descriere),
-                ]),
-
-                m(CardUtilizator),
-
-                m("button.btn", {type:"button", onclick:() => {
-                    document.querySelector("form").classList.remove("none");
-                    document.querySelector("section").classList.remove("none");
-                    document.querySelector("#show-more").classList.remove("none");
-                    document.querySelector("#descriere-anunt").classList.add("none");
-                    document.querySelector("main").classList.add("center");
-                    window.scrollTo({ top: 70, behavior: 'smooth' });
-                }}, "Inapoi la anunturi")
-            ]
-        }
-    }
-};
-
-
-
-function show_details(data){
-
-    m.mount(document.querySelector("#descriere-anunt"), DescriereCamera(data));
-
-    document.querySelector("#descriere-anunt").classList.remove("none");
-    document.querySelector("form").classList.add("none");
-    document.querySelector("section").classList.add("none");
-    document.querySelector("#show-more").classList.add("none");
-    window.scrollTo({ top: 70, behavior: 'smooth' });
- 
-}
-
 
 
 const Camera = {
-    view: vnode => {
 
-        let title = vnode.attrs.camera.localitate + ", " + vnode.attrs.camera.pret + " Euro";
+    view: v => {
 
-        return m(".anunt", {id:vnode.attrs.id}, [
-            m("img.foto-camera", {src:vnode.attrs.camera.foto, 
-                                alt:title,
-                                onclick: event => fullscreen_image(event)}
-                                ),
-            m("span.title", {onclick: _ => show_details(vnode.attrs) }, title)
+        let title = v.attrs.localitate + ", " + v.attrs.buget + " Euro";
+
+        return m(".anunt", {id:v.attrs.id}, [
+            m("img.foto-camera",
+            {src:v.attrs.foto, alt:title, 
+                onclick: () => show_details(v.attrs) }
+            ),
+            m("span.title", {onclick: () => show_details(v.attrs) }, title)
         ])
     }
 };
 
 
+
 const Anunturi = {
-    view: vnode => {
+    oncreate: get_items,
+    view: () => {
+        
+        console.info("Show Camera ", store.camera);
+
         return m("section.anunturi.mb-2", [
-            vnode.attrs.listings ? vnode.attrs.listings.map(obj => {
-                return m(Camera, obj) 
+            store.items ? store.items.map(obj => {
+                return store.camera ? m(Camera, obj) : m(CardUtilizator, obj)
             }) : toast("Se incarca anunturile...", true, 1000)
         ])
     }
 };
 
 
-const Listings =  {
-    listings: [],
-    get_listings: async (form_el) => {
-
-            document.getElementById("show-more").classList.remove("hide");
-            
-            if (form_el !== undefined) {
-                console.log(form_el.target.type);
-                if (form_el.target.type !== "button") {
-                    Listings.listings = []; 
-                }
-            }
-            
-            let form_data = {localitate:document.getElementById("localitate").value, 
-                            buget:document.getElementById("buget").value, 
-                            optiune:document.getElementById("optiune").value};
-            
-            let objectlist = await get_data(form_data);   
-            Listings.listings = Listings.listings.concat(objectlist);
+const ShowMore = {
+    view: () => {
         
-            m.redraw();
-
-        },
-    oncreate: () => {
-            prep$4();
-            if (Listings.listings !== []) {
-                Listings.get_listings();
-            }
-        },
-    onremove: () => {
-        Listings.listings = [];
-    },
-    view: _ => {
-        return [m(FormAnunturi, {get_listings:Listings.get_listings}),
-                m(Anunturi, {listings: Listings.listings}),
-                m("button.btn#show-more", {type:"button", onclick:Listings.get_listings}, "Arata mai multe"),
-                m(ModalImage),
-                m("#descriere-anunt")
-            ]
-        }
+        return m("button.btn#show-more", {type:"button", 
+            onclick: event => {        
+                    event.target.disabled = true;
+                    event.target.style.cursor = "default";
+                    get_items();
+                    event.target.disabled = false;
+                    event.target.style.cursor = "pointer";
+                }
+        }, "Arata mai multe")
+    }
 };
 
+let desc;
 
-// https://tinyurl.com/y9zkw4ev
-// https://flems.io/#0=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-JUMwDKC4bxcBQNMQFGhFA0REN-aQnQpBoEeM8N4vxsB3mBOzF4u7v4AAFuS0CEGiG9sY90cCHguHQYL7qKDIPObAxgGzKCAA
-
-let VeziAnunturi = Listings;const IesiDinCont = {
+const Listings = {
+    oninit: prep$3,
+    oncreate: () => desc = document.querySelector("#descriere-anunt"),
+    onremove:default_store,
+    view: () => {
+        return [
+            m(FormAnunturi),
+            m(Anunturi),
+            m(ShowMore),
+            m("#descriere-anunt")
+        ]
+    }
+};const IesiDinCont = {
     oninit: async () => {
         await firebase.auth().signOut();
         toast("Ai iesit din cont!");
@@ -937,7 +847,7 @@ async function creeaza_cont(event){
 }
 
 
-function prep$5(){
+function prep$4(){
     document.body.className = "light-purple blocuri";
     document.querySelector("main").className = "center";
     document.querySelector("title").innerText = "Creeaza un cont";
@@ -951,7 +861,7 @@ const CreeazaUnCont = {
             return m.route.set("/cont-utilizator")
         }
     },
-    oncreate: prep$5,
+    oncreate: prep$4,
     view: () => {
 
         return m("form", {onsubmit: ev => {creeaza_cont(ev);}}, [
@@ -1011,80 +921,90 @@ const ReseteazaParola = {
             m("button", {type:"submit", class:"btn dark-green"}, "Reseteaza parola")
         ])
     }
-};function prep$6(){
+};// Model
+
+
+let store$1 = {
+    user_data: undefined,
+    anunturi_postate: undefined
+};
+
+
+
+// Controller
+
+
+function prep$5(){
     document.querySelector("main").removeAttribute("class");
     document.body.className = "light-green blocuri";
-    document.querySelector("title").innerText = "Detalii camera";
+    document.querySelector("title").innerText = "Cont utilizator";
     close_menu();
 }
 
 
-
-const Camera$1 = {
-    oninit: vnode => {
-
-        vnode.state.data = { foto: "./static/svg/1.jpg",
-                            
-                            descriere: `Avem o camera libera intr-un apartament 
-                            cu 3 camere, zona este linistita, magazin 
-                            aproape, cautam o persoana care sa stea
-                            pe o perioada de minim un an.
-                            Pentru alte detalii ma puteti contacta
-                            raspun la telefon dupa ora 6.`,
-
-                            titlu: "Iasi, buget 200E",
-                            
-                            };
-    },
-
-    oncreate: prep$6,
-    view: vnode => {
-        return m("div.center", [
-            m("img.responsive-img", {src:vnode.state.data.foto, alt:"Foto camera"}),
-            m("div.descriere", [
-                m("h6", vnode.state.data.titlu),
-                m("span", vnode.state.data.descriere)
-            ])
-        ])
-        
+async function anunturi_postate() {
+    
+    let email;
+    
+    try {
+        email = await firebase.auth().currentUser.email;    
+    } catch (error) {
+       m.route.set("/intra-in-cont"); 
     }
-};
+
+    let ref = firebase.firestore();
+    let query_data = await ref.collection("listing")
+                            .where("utilizator", "==", email)
+                            .get();
+
+    let data = parse_query_data(query_data);
+
+    console.log("Anunturi postate", data);
+
+    return data
+
+} 
 
 
 
-const CardUtilizator$1 = {
-    oninit: vnode => {
-        vnode.state.data = { user_foto: "./static/svg/ca.jpg",
-                            displayName: "Climente Alin",
-                            interes: "Iasi, buget 200E",
-                            telefon: "0724242424",
-                            email: "climente.alin@gmail.com"
-                    };
+// View
+
+
+const AnunturiPostate = {
+    oncreate: async () => {
+        store$1.anunturi_postate = await anunturi_postate();
+        m.redraw();
     },
-    oncreate: prep$6,
-    view: vnode => {
-        return m("section.user", [
-            m("img", {src:vnode.state.data.user_foto}),
-            m("h6", vnode.state.data.displayName),
-            m("span", vnode.state.data.interes),
-            m("span", vnode.state.data.telefon),
-            m("span", vnode.state.data.email),
-            // m("a", {href:"#!/actualizeaza-cont", 
-            //         class:"btn moderate-purple"}, "Actualizeaza contul")
-        ])
-    }
-};
-
-
-
-const DetaliiCamera = {
     view: () => {
-        return m("div.center", {style:"margin-top:1rem;"},[
-            m(Camera$1),
-            m(CardUtilizator$1)
+        return m("section.camere-postate", [
+            m("h6", "Camere postate"),
+            store$1.anunturi_postate ? m("ul", store$1.anunturi_postate.map(anunt => {
+                return m("li", [
+                    m("span", "- " + anunt.localitate + " " + anunt.buget + " Euro")
+                ]) 
+            })) : m("h5", "...")
         ])
     }
-};function prep$7(){
+};
+
+
+const ContUtilizator = {
+    oncreate: async () => {
+        prep$5();
+        store$1.user_data = await get_user_data();
+        m.redraw();
+        console.log(store$1.user_data);
+    },
+    view: () => {
+        
+        return m("div.center.user-layout", [
+            store$1.user_data ? m(CardUtilizator, store$1.user_data) : m("h1", "..."),
+            m(AnunturiPostate),
+            m("a", { href:"#!/actualizeaza-cont", class:"btn moderate-purple"}, "Actualizeaza contul")
+        ])
+
+    }
+};function prep$6(){
     document.body.className = "light-purple blocuri";
     document.querySelector("main").removeAttribute("class");
     document.querySelector("title").innerText = "Actualizeaza cont";
@@ -1139,7 +1059,7 @@ async function actualizeaza_cont(event){
                         await db.collection("user").doc(doc.id)
                         .update({
                             nume: form_data.nume,
-                            buget: form_data.buget,
+                            buget: Number(form_data.buget.trim()),
                             localitate: form_data.localitate,
                             telefon: form_data.telefon,
                             foto: fotourl
@@ -1159,7 +1079,8 @@ async function actualizeaza_cont(event){
 
     } catch (error) {
         console.error(error);
-        toast(error.message, false, 8000);
+        toast("Nu am putut realiza operatia!", false, 8000);
+        // toast(error.message, false, 8000)
         unfreeze_form(event.target);
     }
     
@@ -1173,7 +1094,7 @@ const ActualizeazaCont = {
             return m.route.set("/intra-in-cont")
         }
     },
-    oncreate: prep$7,
+    oncreate: prep$6,
     view: () => {
 
         return m("div.center", [
@@ -1223,28 +1144,8 @@ const ActualizeazaCont = {
         {style:"padding:2rem;border-radius:20px;"},
         "Pagina nu a putut fi gasita..")
     }
-};// Initialize firebase
-if (typeof firebase === 'undefined') throw new Error('hosting/init-error: Firebase SDK not detected. You must include it before /__/firebase/init.js');
-var firebaseConfig = {
-  "projectId": "cameredeinchiriat-b7885",
-  "appId": "1:841749487216:web:602b8e01ac6561aad4deb5",
-  "databaseURL": "https://cameredeinchiriat-b7885.firebaseio.com",
-  "storageBucket": "cameredeinchiriat-b7885.appspot.com",
-  "locationId": "europe-west6",
-  "apiKey": "AIzaSyA4oEHfBeM_8mmYXDiaao01eIHkdfmuIr0",
-  "authDomain": "cameredeinchiriat-b7885.firebaseapp.com",
-  "messagingSenderId": "841749487216",
-  "measurementId": "G-2961KQZJFR"
-};
-if (firebaseConfig) {
-  firebase.initializeApp(firebaseConfig);
-}
-
-
-
-
-const header = document.querySelector("header"); 
-const main = document.querySelector("main");
+};const header = document.querySelector("header"); 
+const main   = document.querySelector("main");
 const footer = document.querySelector("footer");
 
 
@@ -1259,9 +1160,7 @@ m.route(main, "/", {
     "/intra-in-cont": IntraInCont,
     "/intra-in-cont/:adauga_camera": IntraInCont,
     "/adauga-camera": AdaugaCamera,
-    "/vezi-anunturi": VeziAnunturi,
-    "/cauta-coleg/:localitate/:buget": VeziAnunturi,
-    "/cauta-camera/:localitate/:buget": VeziAnunturi,
+    "/vezi-anunturi": Listings,
     "/iesi-din-cont": IesiDinCont,
     "/politica-cookies": PoliticaCookies,
     "/politica-de-confidentialitate": PoliticaDeConfidentialitate,
@@ -1272,8 +1171,7 @@ m.route(main, "/", {
     "/reseteaza-parola": ReseteazaParola, 
     "/cont-utilizator": ContUtilizator,
     "/actualizeaza-cont": ActualizeazaCont,
-    "/detalii-camera/:id_camera": DetaliiCamera, 
-
+  
     "/:404...": Error404
 
 });}());
